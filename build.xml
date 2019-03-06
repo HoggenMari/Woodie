@@ -1,4 +1,4 @@
-<project name="HelloWorld" basedir="." default="main">
+<project name="Woodie" basedir="." default="main">
 
     <property name="src.dir"     value="src"/>
 
@@ -31,30 +31,30 @@
         </copy>
     </target>
 
+	
+	
+	<path id="build-classpath">
+	   <fileset dir="${lib.dir}">
+	      <include name="*.jar"/>
+	   </fileset>
+	</path>
 
-    <path id="build.classpath">
-  	<fileset dir="${basedir}">
-     	    <include name="../../lib/*"/>
-  	</fileset>
-    </path>
-
-    <pathconvert property="manifest.classpath" pathsep=" ">
-  	<path refid="build.classpath"/>
-  	<mapper>
-    	    <chainedmapper>
-       		<flattenmapper/>
-       	    	<globmapper from="*.jar" to="lib/*.jar"/>
-    	    </chainedmapper>
-  	</mapper>
-    </pathconvert>
-
-
-    <target name="jar" depends="compile">
+	<pathconvert property="manifest.classpath" pathsep=" ">
+	  <path refid="build-classpath"/>
+	  <mapper>
+	    <chainedmapper>
+	       <flattenmapper/>
+	       <globmapper from="*.jar" to="../../lib/*.jar"/>
+	    </chainedmapper>
+	  </mapper>
+	</pathconvert>
+	
+    <target name="jar" depends="compile">	
         <mkdir dir="${jar.dir}"/>
         <jar destfile="${jar.dir}/${ant.project.name}.jar" basedir="${classes.dir}">
             <manifest>
                 <attribute name="Main-Class" value="${main-class}"/>
-		<attribute name="Class-Path" value="${manifest.classpath}"/>
+				<attribute name="Class-Path" value="${manifest.classpath}"/>
             </manifest>
         </jar>
     </target>
