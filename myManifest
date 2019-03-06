@@ -1,0 +1,2 @@
+Main-Class: oata.HelloWorld
+Class-Path: . lib/*
