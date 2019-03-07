@@ -2,9 +2,11 @@
 
     <property name="src.dir"     value="src"/>
 
+    <property name="main.dir"   value="woodie"/>
     <property name="build.dir"   value="build"/>
     <property name="classes.dir" value="${build.dir}/classes"/>
     <property name="jar.dir"     value="${build.dir}/jar"/>
+    <property name="scripts.dir" value="scripts"/>
 
     <property name="main-class"  value="core.Main"/>
 
@@ -59,26 +61,27 @@
         </jar>
     </target>
 
-    <target name="run" depends="jar">
+    <target name="run" depends="compile">
         <java fork="true" jar="${jar.dir}/${ant.project.name}.jar">
         </java>
     </target>
 
-    <target name="copy" depends="jar">
-	<scp todir="${username}:${password}@${raspberrypi}:${raspberryfolder}/${build.dir}" trust="true">
+    <target name="copy" depends="compile">
+	<scp todir="${username}:${password}@${raspberrypi}:${raspberryfolder}/${main.dir}/${build.dir}" trust="true">
     	    <fileset dir="${build.dir}" includes="**"/>  
 	</scp>
-	<scp todir="${username}:${password}@${raspberrypi}:${raspberryfolder}/${lib.dir}" trust="true">
+	<scp todir="${username}:${password}@${raspberrypi}:${raspberryfolder}/${main.dir}/${lib.dir}" trust="true">
     	    <fileset dir="${lib.dir}" includes="**"/>  
 	</scp>
-    </target>
-
-    <target name="debug" depends="copy">
-		<sshexec host="${raspberrypi}" username="${username}" password="${password}" trust="true" failonerror="true" usepty="true" command="java -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=y -jar ${jar.dir}/${ant.project.name}.jar" />
+    <scp todir="${username}:${password}@${raspberrypi}:${raspberryfolder}/${main.dir}/${scripts.dir}" trust="true">
+        	<fileset dir="${scripts.dir}" includes="**"/>  
+    </scp>
     </target>
 	
+	<target name="debug" depends="copy">
+			<sshexec host="${raspberrypi}" username="${username}" password="${password}" trust="true" failonerror="true" usepty="true" command="woodie/scripts/run.sh" />
+	</target>
 	
-
     <target name="clean-build" depends="clean,jar"/>
 
     <target name="main" depends="clean,debug"/>

@@ -1,13 +1,24 @@
 package core;
 
-import org.apache.log4j.Logger;
-import org.apache.log4j.BasicConfigurator;
+import processing.core.*;
 
-public class Main {
-    static Logger logger = Logger.getLogger(Main.class);
-
-    public static void main(String[] args) {
-        BasicConfigurator.configure();
-        logger.info("Hello World");          // the old SysO-statement
+public class Main extends PApplet {
+	
+	public static void main(String[] args) {
+        PApplet.main("core.Main");
+		PGraphics pg = new PGraphics();
+		System.out.println("main");
+		
     }
+
+    public void setup(){
+		System.out.println("setup");
+		frameRate(1);
+    }
+
+    public void draw(){
+		System.out.println("draw");
+
+    }
+    
 }
