@@ -5,6 +5,9 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
+
 import com.fazecast.jSerialComm.SerialPort;
 
 import processing.core.*;
@@ -19,14 +22,27 @@ public class Main extends PApplet {
 	
 	String grbl_start = "Grbl 1.1f ['$' for help]";
 	boolean grblStarted = false;
-	
+		
 	public static void main(String[] args) {
         PApplet.main("core.Main");		
     }
 
     public void setup(){
-		System.out.println("setup");
 		
+		System.out.println("== START SUBSCRIBER ==");
+
+	    MqttClient client;
+		try {
+			client = new MqttClient("tcp://192.168.0.102:6667", MqttClient.generateClientId());
+			client.setCallback( new SimpleMqttCallBack() );
+		    client.connect();
+
+		    client.subscribe("rpi/reboot");
+		} catch (MqttException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	    
 		// open serial port
 		SerialPort[] portNames = SerialPort.getCommPorts();
 		for(int i = 0; i < portNames.length; i++) {
@@ -77,7 +93,7 @@ public class Main extends PApplet {
     public void sendData() {
 		if (port.openPort()) {
 			OutputStream outputStream = port.getOutputStream();
-			String str = "X50\n";
+			String str = "X10\n";
 			try {
 				outputStream.write(str.getBytes());
 			} catch (IOException e) {
