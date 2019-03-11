@@ -13,16 +13,36 @@ public class SimpleMqttCallBack implements MqttCallback {
   }
 
   public void messageArrived(String s, MqttMessage mqttMessage) throws Exception {
-	
-	switch(s) {
-		case "rpi/reboot":
-		    System.out.println("Message received:\t" + new String(mqttMessage.getPayload()));
-		    try {
-				Runtime.getRuntime().exec("sudo reboot -h now");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+
+	String payload = new String(mqttMessage.getPayload());
+	switch(s){
+		case "rpi":
+			switch(payload) {
+				case "reboot":
+					System.out.println("Message received:\t" + new String(mqttMessage.getPayload()));
+					try {
+						Runtime.getRuntime().exec("sudo reboot -h now");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					break;
+				case "shutdown":
+					System.out.println("Message received:\t" + new String(mqttMessage.getPayload()));
+					try {
+						Runtime.getRuntime().exec("sudo shutdown -h now");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					break;
+				default:
+					System.out.println("Invalid topic");
 			}
+		case "gcode":
+		    System.out.println("Message received:\t" + payload);
+		    GcodeSender.getInstance().sendData(payload);
+		    break;
 		default:
 			System.out.println("Invalid topic");
 

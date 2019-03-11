@@ -1,5 +1,7 @@
 #!/bin/sh
 
+sudo killall -9 run_start.sh
+
 Xvfb :1 &
 export DISPLAY=:1
 

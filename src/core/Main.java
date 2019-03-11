@@ -33,18 +33,21 @@ public class Main extends PApplet {
 
 	    MqttClient client;
 		try {
-			client = new MqttClient("tcp://192.168.0.102:6667", MqttClient.generateClientId());
+			client = new MqttClient("tcp://192.168.0.102:6667", Long.toString(System.currentTimeMillis()));
 			client.setCallback( new SimpleMqttCallBack() );
 		    client.connect();
 
-		    client.subscribe("rpi/reboot");
+		    client.subscribe("rpi");
+		    client.subscribe("gcode");
 		} catch (MqttException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		GcodeSender.getInstance();
 	    
 		// open serial port
-		SerialPort[] portNames = SerialPort.getCommPorts();
+		/*SerialPort[] portNames = SerialPort.getCommPorts();
 		for(int i = 0; i < portNames.length; i++) {
 			System.out.println(portNames[i].getSystemPortName());
 			if (portNames[i].getSystemPortName().contains(ARDUINO)) {
@@ -58,20 +61,20 @@ public class Main extends PApplet {
 			if (port.openPort()) {
 				System.out.print("port open");
 			}
-		}
+		}*/
 				
     }
 
     public void draw(){
-    	requestData();
-    	if (grblStarted && !send) {
+    	GcodeSender.getInstance().requestData();
+    	if (GcodeSender.getInstance().grblStarted && !GcodeSender.getInstance().send) {
     		delay(100);
-    		sendData();
-    		send = true;
+    		GcodeSender.getInstance().sendData();
+    		GcodeSender.getInstance().send = true;
     	}
     }
     
-    public void requestData() {
+    /*public void requestData() {
 		if (port.openPort()) {
 		port.clearDTR();
 		delay(100);
@@ -93,7 +96,7 @@ public class Main extends PApplet {
     public void sendData() {
 		if (port.openPort()) {
 			OutputStream outputStream = port.getOutputStream();
-			String str = "X10\n";
+			String str = "X-20\n";
 			try {
 				outputStream.write(str.getBytes());
 			} catch (IOException e) {
@@ -108,6 +111,6 @@ public class Main extends PApplet {
 			}
 
 		}
-    }
+    }*/
     
 }
