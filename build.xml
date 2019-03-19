@@ -7,6 +7,7 @@
     <property name="classes.dir" value="${build.dir}/classes"/>
     <property name="jar.dir"     value="${build.dir}/jar"/>
     <property name="scripts.dir" value="scripts"/>
+    <property name="gcode.dir" value="gcode"/>
 
     <property name="main-class"  value="core.Main"/>
 
@@ -61,8 +62,9 @@
         </jar>
     </target>
 
-    <target name="run" depends="compile">
+    <target name="run" depends="jar">
         <java fork="true" jar="${jar.dir}/${ant.project.name}.jar">
+        	<arg line="cu.usbserial-DN041WCL"/>
         </java>
     </target>
 
@@ -76,6 +78,9 @@
     <scp todir="${username}:${password}@${raspberrypi}:${raspberryfolder}/${main.dir}/${scripts.dir}" trust="true">
         	<fileset dir="${scripts.dir}" includes="**"/>  
     </scp>
+    <scp todir="${username}:${password}@${raspberrypi}:${raspberryfolder}/${main.dir}/${gcode.dir}" trust="true">
+           	<fileset dir="${gcode.dir}" includes="**"/>  
+    </scp>
     </target>
 	
 	<target name="debug" depends="copy">
@@ -84,6 +89,8 @@
 	
     <target name="clean-build" depends="clean,jar"/>
 
+    <target name="local" depends="clean,run"/>
+	
     <target name="main" depends="clean,debug"/>
 
 

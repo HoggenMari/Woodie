@@ -14,17 +14,20 @@ import processing.core.*;
 
 public class Main extends PApplet {
 	
-	SerialPort port = null;
-	String ARDUINO = "ttyUSB";
-	int BAUDRATE = 115200;
-	
 	boolean send = false;
 	
 	String grbl_start = "Grbl 1.1f ['$' for help]";
 	boolean grblStarted = false;
+	
+	static String portname = "";
+	
 		
 	public static void main(String[] args) {
-        PApplet.main("core.Main");		
+        PApplet.main("core.Main");	
+        
+        if(args.length > 0) {
+        	portname = args[0];
+        }
     }
 
     public void setup(){
@@ -33,7 +36,7 @@ public class Main extends PApplet {
 
 	    MqttClient client;
 		try {
-			client = new MqttClient("tcp://192.168.0.102:6667", Long.toString(System.currentTimeMillis()));
+			client = new MqttClient("tcp://localhost:6667", Long.toString(System.currentTimeMillis()));
 			client.setCallback( new SimpleMqttCallBack() );
 		    client.connect();
 
@@ -45,72 +48,20 @@ public class Main extends PApplet {
 		}
 		
 		GcodeSender.getInstance();
-	    
-		// open serial port
-		/*SerialPort[] portNames = SerialPort.getCommPorts();
-		for(int i = 0; i < portNames.length; i++) {
-			System.out.println(portNames[i].getSystemPortName());
-			if (portNames[i].getSystemPortName().contains(ARDUINO)) {
-				System.out.println(portNames[i].getSystemPortName());
-				port = portNames[i];
-			}
-		}
-		
-		if (port != null) {
-			port.setBaudRate(BAUDRATE);
-			if (port.openPort()) {
-				System.out.print("port open");
-			}
-		}*/
+		GcodeSender.setupConnection(portname);
 				
     }
 
     public void draw(){
-    	GcodeSender.getInstance().requestData();
-    	if (GcodeSender.getInstance().grblStarted && !GcodeSender.getInstance().send) {
+    	//GcodeSender.requestData();
+    	//GcodeSender.printCommands();
+    	/*if (GcodeSender.grblStarted && !GcodeSender.getInstance().send) {
     		delay(100);
-    		GcodeSender.getInstance().sendData();
+    		//GcodeSender.getInstance().sendData();
     		GcodeSender.getInstance().send = true;
-    	}
+    		GcodeSender.readFile("/home/pi/woodie/gcode/output_0002.ngc");
+    		GcodeSender.printCommands();
+    	}*/
     }
-    
-    /*public void requestData() {
-		if (port.openPort()) {
-		port.clearDTR();
-		delay(100);
-    	Scanner scanner = new Scanner(port.getInputStream());
-		while(scanner.hasNextLine()) {
-			try {
-				String line = scanner.nextLine();
-				if (line.equals(grbl_start)) {
-					grblStarted = true;
-				}
-				System.out.println(line);
-				
-			} catch(Exception e) {}
-		}
-		scanner.close();
-		}
-    }
-    
-    public void sendData() {
-		if (port.openPort()) {
-			OutputStream outputStream = port.getOutputStream();
-			String str = "X-20\n";
-			try {
-				outputStream.write(str.getBytes());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			try {
-				outputStream.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-		}
-    }*/
     
 }

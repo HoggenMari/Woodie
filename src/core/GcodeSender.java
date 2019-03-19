@@ -1,8 +1,13 @@
 package core;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Scanner;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 
 import com.fazecast.jSerialComm.SerialPort;
 
@@ -16,21 +21,26 @@ public class GcodeSender {
 	static String ARDUINO = "ttyUSB";
 	static int BAUDRATE = 115200;
 		
-	String grbl_start = "Grbl 1.1f ['$' for help]";
-	boolean grblStarted = false;
+	static String grbl_start = "Grbl 1.1f ['$' for help]";
+	static boolean grblStarted = false;
 	
 	boolean send = false;
+	
+	static ArrayList<String> gcodeCommands = new ArrayList<String>();
 
 	public static synchronized GcodeSender getInstance() {
 		if (GcodeSender.instance == null) {
 			GcodeSender.instance = new GcodeSender();
-			setupConnection();
+			//setupConnection();
 		}
 		return GcodeSender.instance;
     }
 
-	private static void setupConnection() {
+	public static void setupConnection(String portname) {
 		
+		if(!portname.equals("")) {
+			ARDUINO = portname;
+		}
 		// open serial port
 		SerialPort[] portNames = SerialPort.getCommPorts();
 		for(int i = 0; i < portNames.length; i++) {
@@ -47,9 +57,19 @@ public class GcodeSender {
 				System.out.print("port open");
 			}
 		}
+		
+		while (!grblStarted) {
+			requestData();
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 	
-	public void requestData() {
+	public static void requestData() {
 		if (port.openPort()) {
 		port.clearDTR();
 		//delay(100);
@@ -88,23 +108,125 @@ public class GcodeSender {
 		}
     }
 	
-	public void sendData(String s) {
+	public static boolean sendData(String s) {
+		boolean ok = false;
 		if (port.openPort()) {
 			OutputStream outputStream = port.getOutputStream();
+	    	Scanner scanner = new Scanner(port.getInputStream());
 			String str = s + "\n";
 			try {
 				outputStream.write(str.getBytes());
+				outputStream.close();
+				Thread.sleep(1000);
+				if (scanner.hasNextLine()) {
+					String line = scanner.nextLine();
+					System.out.println(line);
+					if (line.equals("ok")) {
+						ok = true;
+					} else {
+						ok = false;
+					}
+				}
+				scanner.close();
 			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				ok = false;
+			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			}
+		return ok;
+    }
+	
+	public static boolean isBusy() {
+		boolean busy = false;
+		if (port.openPort()) {
+			OutputStream outputStream = port.getOutputStream();
+	    	Scanner scanner = new Scanner(port.getInputStream());
+			String str = "?\n";
 			try {
+				outputStream.write(str.getBytes());
 				outputStream.close();
+				Thread.sleep(1000);
+				if (scanner.hasNextLine()) {
+					String line = scanner.nextLine();
+					System.out.println(line);
+					if (line.contains("Run")) {
+						busy = true;
+					} else {
+						busy = false;
+					}
+				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				busy = false;
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+			
+		}
+		
+		
+		return busy;
+		
+		
+	}
+	
+	public static void readFile(String filename) {
+		BufferedReader br = null;
+		FileReader fr = null;
+
+		try {
+
+			fr = new FileReader(filename);
+			br = new BufferedReader(fr);
+
+			String sCurrentLine;
+			
+			gcodeCommands = new ArrayList<String>();
+
+			while ((sCurrentLine = br.readLine()) != null) {
+				gcodeCommands.add(sCurrentLine);
+			}
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+
+		} finally {
+
+			try {
+
+				if (br != null)
+					br.close();
+
+				if (fr != null)
+					fr.close();
+
+			} catch (IOException ex) {
+
+				ex.printStackTrace();
+
 			}
 
 		}
-    }
+	}
+	
+	public static void printCommands() {
+		Thread thread = new Thread(){
+		   public void run(){
+		     System.out.println("Thread Running");
+		     for (int i = 0; i < gcodeCommands.size(); i++) {
+			     System.out.println(gcodeCommands.get(i));
+		    	 while (!sendData(gcodeCommands.get(i)));
+		    	 while (isBusy());
+		     }    
+		   }
+		};
+		thread.start();
+	}
 }
