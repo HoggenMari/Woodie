@@ -21,6 +21,7 @@ public class Main extends PApplet {
 	
 	static String portname = "";
 	
+	PGraphics pg;
 		
 	public static void main(String[] args) {
         PApplet.main("core.Main");	
@@ -32,6 +33,8 @@ public class Main extends PApplet {
 
     public void setup(){
 		
+    	size(100,100);
+    	
 		System.out.println("== START SUBSCRIBER ==");
 
 	    MqttClient client;
@@ -49,10 +52,21 @@ public class Main extends PApplet {
 		
 		GcodeSender.getInstance();
 		GcodeSender.setupConnection(portname);
+		
+		LEDController.instance.setupConnection(this);
+		
+    	pg = createGraphics(12,4);
+
 				
     }
 
     public void draw(){
+    	
+    	pg.beginDraw();
+    	pg.background(frameCount%255,220,220);
+    	pg.endDraw();
+    	
+    	LEDController.instance.send(pg);
     	//GcodeSender.requestData();
     	//GcodeSender.printCommands();
     	/*if (GcodeSender.grblStarted && !GcodeSender.getInstance().send) {
