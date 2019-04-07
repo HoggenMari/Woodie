@@ -20,6 +20,9 @@ public class GcodeSender {
 	static SerialPort port = null;
 	static String ARDUINO = "ttyUSB";
 	static int BAUDRATE = 115200;
+	
+	static SerialPort portChalk = null;
+
 		
 	static String grbl_start = "Grbl 1.1f ['$' for help]";
 	static boolean grblStarted = false;
@@ -45,10 +48,15 @@ public class GcodeSender {
 		SerialPort[] portNames = SerialPort.getCommPorts();
 		for(int i = 0; i < portNames.length; i++) {
 			System.out.println(portNames[i].getSystemPortName());
-			if (portNames[i].getSystemPortName().contains(ARDUINO)) {
+			if (portNames[i].getSystemPortName().contains("ttyUSB1")) {
 				System.out.println(portNames[i].getSystemPortName());
 				port = portNames[i];
 			}
+			if (portNames[i].getSystemPortName().contains("ttyUSB0")) {
+				System.out.println(portNames[i].getSystemPortName());
+				portChalk = portNames[i];
+			}
+			
 		}
 				
 		if (port != null) {
@@ -58,8 +66,16 @@ public class GcodeSender {
 			}
 		}
 		
+		if (portChalk != null) {
+			portChalk.setBaudRate(BAUDRATE);
+			if (portChalk.openPort()) {
+				System.out.print("port 2 open");
+			}
+		}
+		
 		while (!grblStarted) {
 			requestData();
+			requestData2();
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
@@ -88,6 +104,41 @@ public class GcodeSender {
 		}
     }
 	
+	public static void requestData2() {
+		if (portChalk.openPort()) {
+		portChalk.clearDTR();
+		//delay(100);
+    	Scanner scanner = new Scanner(portChalk.getInputStream());
+		while(scanner.hasNextLine()) {
+			try {
+				String line = scanner.nextLine();
+				System.out.println(line);
+				
+			} catch(Exception e) {}
+		}
+		scanner.close();
+		}
+    }
+	
+	public void send(String str) {
+		if (portChalk.openPort()) {
+			OutputStream outputStream = portChalk.getOutputStream();
+			try {
+				outputStream.write(str.getBytes());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				outputStream.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+	}
+	
 	public void sendData() {
 		if (port.openPort()) {
 			OutputStream outputStream = port.getOutputStream();
@@ -107,6 +158,32 @@ public class GcodeSender {
 
 		}
     }
+	
+	public void writeReset() {
+		/*OutputStream outputStream = port.getOutputStream();
+		String str = "!\n";
+		try {
+			outputStream.write(str.getBytes());
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			outputStream.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
+		//byte[] sendData = new byte[]{(byte) 0x18};
+		//port.writeBytes(sendData, 1);
+		try {
+			wait(100);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		setupConnection(ARDUINO);
+	}
 	
 	public static boolean sendData(String s) {
 		boolean ok = false;
