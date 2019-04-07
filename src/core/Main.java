@@ -45,6 +45,10 @@ public class Main extends PApplet {
 
 		    client.subscribe("rpi");
 		    client.subscribe("gcode");
+		    client.subscribe("chalk");
+		    client.subscribe("control");
+		    client.subscribe("draw");
+
 		} catch (MqttException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -67,15 +71,16 @@ public class Main extends PApplet {
     	pg.endDraw();
     	
     	LEDController.instance.send(pg);
+    	
     	//GcodeSender.requestData();
     	//GcodeSender.printCommands();
-    	/*if (GcodeSender.grblStarted && !GcodeSender.getInstance().send) {
+    	if (GcodeSender.grblStarted && !GcodeSender.getInstance().send) {
     		delay(100);
     		//GcodeSender.getInstance().sendData();
     		GcodeSender.getInstance().send = true;
     		GcodeSender.readFile("/home/pi/woodie/gcode/output_0002.ngc");
     		GcodeSender.printCommands();
-    	}*/
+    	}
     }
     
 }

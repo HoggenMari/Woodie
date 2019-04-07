@@ -43,6 +43,28 @@ public class SimpleMqttCallBack implements MqttCallback {
 		    System.out.println("Message received:\t" + payload);
 		    GcodeSender.getInstance().sendData(payload);
 		    break;
+		case "chalk":
+			System.out.println("Message received:\t" + payload);
+			if (payload.contentEquals("up")) {
+				System.out.println("up");
+			} else if (payload.contentEquals("down")) {
+				System.out.println("down");
+			}
+			break;
+		case "control":
+			System.out.println("Message received:\t" + payload);
+			if (payload.contentEquals("pause")) {
+				System.out.println("pause");
+			} else if (payload.contentEquals("stop")) {
+				System.out.println("stop");
+			}
+			break;
+		case "draw":
+			System.out.println("Message received:\t" + payload);
+			if (payload.contentEquals("flower")) {
+				System.out.println("flower");
+			}
+			break;
 		default:
 			System.out.println("Invalid topic");
 
@@ -51,4 +73,5 @@ public class SimpleMqttCallBack implements MqttCallback {
 
   public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
   }
+  
 }
