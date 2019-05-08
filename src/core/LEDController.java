@@ -13,7 +13,7 @@ public class LEDController {
 	String IP_ADDRESS = "127.0.0.1";  // the remote IP address
 	int PORT = 5154;  // the destination port
 
-	int NUM_LEDS = 48;
+	int NUM_LEDS = 64;
 
 	byte[] HEADER = new byte[] { (byte)0x41, (byte)0x72, (byte)0x74,
 	    (byte)0x2d, (byte)0x4e, (byte)0x65, (byte)0x74, (byte)0x30, (byte)0x50, (byte)0x50, (byte)0xff, (byte)0xff, (byte)0xff,
@@ -44,9 +44,9 @@ public class LEDController {
 			for(int iy=0; iy<pg.height; iy++) {
 				int rgb = pg.get(ix, iy);
 				
-				message[dataPointer++] = (byte) (rgb & 0xff);
-				message[dataPointer++] = (byte) (rgb >> 8 & 0xff);
+				message[dataPointer++] = (byte) (rgb >> 8 & 0xff); //(rgb & 0xff);
 				message[dataPointer++] = (byte) (rgb >> 16 & 0xff);
+				message[dataPointer++] = (byte) (rgb & 0xff); //(rgb >> 16 & 0xff);
 				
 			}
 		}

@@ -51,13 +51,19 @@ public class SimpleMqttCallBack implements MqttCallback {
 			} else if (payload.contentEquals("down")) {
 				System.out.println("down");
 				GcodeSender.getInstance().send("DOWN\n");
+			} else if (payload.contentEquals("turboup")) {
+				System.out.println("turboup");
+				GcodeSender.getInstance().send("TURBOUP\n");
+			} else if (payload.contentEquals("turbodown")) {
+				System.out.println("turbodown");
+				GcodeSender.getInstance().send("TURBODOWN\n");
 			}
 			break;
 		case "control":
 			System.out.println("Message received:\t" + payload);
 			if (payload.contentEquals("pause")) {
 				System.out.println("pause");
-				GcodeSender.getInstance().writeReset();
+				//GcodeSender.getInstance().writeReset();
 			} else if (payload.contentEquals("stop")) {
 				System.out.println("stop");
 			}
@@ -66,6 +72,24 @@ public class SimpleMqttCallBack implements MqttCallback {
 			System.out.println("Message received:\t" + payload);
 			if (payload.contentEquals("flower")) {
 				System.out.println("flower");
+			}
+			break;
+		case "move":
+			System.out.println("Message received:\t" + payload);
+			String[] parts = payload.split(" ");
+			int distance = Integer.parseInt(parts[1]);
+			if (parts[0].contentEquals("up")) {
+				System.out.println(distance);
+				GcodeSender.getInstance().move(GcodeSender.Direction.UP, distance);
+			} else if (parts[0].contentEquals("down")) {
+				System.out.println(distance);
+				GcodeSender.getInstance().move(GcodeSender.Direction.DOWN, distance);
+			} else if (parts[0].contentEquals("left")) {
+				System.out.println(distance);
+				GcodeSender.getInstance().move(GcodeSender.Direction.LEFT, distance);
+			} else if (parts[0].contentEquals("right")) {
+				System.out.println(distance);
+				GcodeSender.getInstance().move(GcodeSender.Direction.RIGHT, distance);
 			}
 			break;
 		default:

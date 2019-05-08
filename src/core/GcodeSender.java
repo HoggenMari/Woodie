@@ -30,6 +30,10 @@ public class GcodeSender {
 	boolean send = false;
 	
 	static ArrayList<String> gcodeCommands = new ArrayList<String>();
+	
+	public enum Direction {
+	    UP, DOWN, LEFT, RIGHT 
+	}
 
 	public static synchronized GcodeSender getInstance() {
 		if (GcodeSender.instance == null) {
@@ -48,11 +52,11 @@ public class GcodeSender {
 		SerialPort[] portNames = SerialPort.getCommPorts();
 		for(int i = 0; i < portNames.length; i++) {
 			System.out.println(portNames[i].getSystemPortName());
-			if (portNames[i].getSystemPortName().contains("ttyUSB1")) {
+			if (portNames[i].getSystemPortName().contains("ttyUSB0")) {
 				System.out.println(portNames[i].getSystemPortName());
 				port = portNames[i];
 			}
-			if (portNames[i].getSystemPortName().contains("ttyUSB0")) {
+			if (portNames[i].getSystemPortName().contains("ttyUSB1")) {
 				System.out.println(portNames[i].getSystemPortName());
 				portChalk = portNames[i];
 			}
@@ -139,6 +143,25 @@ public class GcodeSender {
 		}
 	}
 	
+	public static void sendCommand(String str) {
+		if (port.openPort()) {
+			OutputStream outputStream = port.getOutputStream();
+			try {
+				outputStream.write(str.getBytes());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				outputStream.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+		}
+    }
+	
 	public void sendData() {
 		if (port.openPort()) {
 			OutputStream outputStream = port.getOutputStream();
@@ -183,6 +206,27 @@ public class GcodeSender {
 			e.printStackTrace();
 		}
 		setupConnection(ARDUINO);
+	}
+	
+	public static void move(Direction dir, int distance) {
+		 switch (dir) {
+		 case UP:
+			 System.out.println("move up " + dir + distance);
+			 sendData("$J=G91 G20 X0.5");
+			 break;
+		 case DOWN:
+			 System.out.println("move down " + dir + distance);
+			 break;
+		 case LEFT:
+			 System.out.println("move left " + dir + distance);
+			 break;
+		 case RIGHT:
+			 System.out.println("move right " + dir + distance);
+			 break;
+		 default:
+			 System.out.println("Command invalid");
+			 break;
+		 }
 	}
 	
 	public static boolean sendData(String s) {
@@ -299,6 +343,11 @@ public class GcodeSender {
 		     System.out.println("Thread Running");
 		     for (int i = 0; i < gcodeCommands.size(); i++) {
 			     System.out.println(gcodeCommands.get(i));
+			     if (gcodeCommands.get(i).contains("Z5.000000")) {
+			    	 GcodeSender.getInstance().send("TURBOUP\n");
+			     } else if (gcodeCommands.get(i).contains("Z-1.000000")) {
+			    	 GcodeSender.getInstance().send("TURBODOWN\n");
+			     }
 		    	 while (!sendData(gcodeCommands.get(i)));
 		    	 while (isBusy());
 		     }    

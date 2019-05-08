@@ -34,6 +34,8 @@ public class Main extends PApplet {
     public void setup(){
 		
     	size(100,100);
+    	colorMode(RGB);
+    	//frameRate(10);
     	
 		System.out.println("== START SUBSCRIBER ==");
 
@@ -48,6 +50,7 @@ public class Main extends PApplet {
 		    client.subscribe("chalk");
 		    client.subscribe("control");
 		    client.subscribe("draw");
+		    client.subscribe("move");
 
 		} catch (MqttException e) {
 			// TODO Auto-generated catch block
@@ -59,28 +62,40 @@ public class Main extends PApplet {
 		
 		LEDController.instance.setupConnection(this);
 		
-    	pg = createGraphics(12,4);
-
+    	pg = createGraphics(16,4);
+    	
 				
     }
 
     public void draw(){
     	
     	pg.beginDraw();
-    	pg.background(frameCount%255,220,220);
+    	pg.colorMode = PConstants.RGB;
+    	pg.noStroke();
+    	pg.fill(frameRate%255,255,0);
+    	//for(int i=0; i<pg.width; i++) {
+        //	pg.fill(255-(frameCount%10)*10,i*10,10);
+        //	pg.rect(i,0,1,pg.height);
+    	//}
+    	pg.rect(0,0,pg.width,pg.height);
     	pg.endDraw();
-    	
+
     	LEDController.instance.send(pg);
+
+    	
+    	/*if (this.frameCount % 100 == 0) {
+    		System.out.println(this.frameRate);
+    	}*/
     	
     	//GcodeSender.requestData();
     	//GcodeSender.printCommands();
-    	if (GcodeSender.grblStarted && !GcodeSender.getInstance().send) {
+    	/*if (GcodeSender.grblStarted && !GcodeSender.getInstance().send) {
     		delay(100);
     		//GcodeSender.getInstance().sendData();
     		GcodeSender.getInstance().send = true;
-    		GcodeSender.readFile("/home/pi/woodie/gcode/output_0002.ngc");
+    		GcodeSender.readFile("/home/pi/woodie/gcode/output_0003.ngc");
     		GcodeSender.printCommands();
-    	}
+    	}*/
     }
     
 }
