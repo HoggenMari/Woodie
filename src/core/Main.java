@@ -58,7 +58,7 @@ public class Main extends PApplet {
 		}
 		
 		GcodeSender.getInstance();
-		GcodeSender.setupConnection(portname);
+		GcodeSender.setupConnection(portname, this);
 		
 		LEDController.instance.setupConnection(this);
 		

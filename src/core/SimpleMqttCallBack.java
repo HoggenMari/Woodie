@@ -63,13 +63,19 @@ public class SimpleMqttCallBack implements MqttCallback {
 			System.out.println("Message received:\t" + payload);
 			if (payload.contentEquals("pause")) {
 				System.out.println("pause");
+				GcodeSender.getInstance().pause();
 				//GcodeSender.getInstance().writeReset();
 			} else if (payload.contentEquals("stop")) {
 				System.out.println("stop");
+				GcodeSender.getInstance().resume();
 			}
 			break;
 		case "draw":
 			System.out.println("Message received:\t" + payload);
+			int number = Integer.parseInt(payload);
+			if (number>0) {
+				GcodeSender.getInstance().draw(number);
+			}
 			if (payload.contentEquals("flower")) {
 				System.out.println("flower");
 			}
