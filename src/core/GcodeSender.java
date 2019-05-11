@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Scanner;
+
+import javax.swing.event.EventListenerList;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -19,25 +22,30 @@ public class GcodeSender {
 
 	private GcodeSender () {}
 	
-	static SerialPort port = null;
-	static String ARDUINO = "ttyUSB";
-	static int BAUDRATE = 115200;
+	SerialPort port = null;
+	String ARDUINO = "ttyUSB";
+	int BAUDRATE = 115200;
 	
-	static SerialPort portChalk = null;
+	SerialPort portChalk = null;
 
 		
-	static String grbl_start = "Grbl 1.1f ['$' for help]";
-	static boolean grblStarted = false;
+	String grbl_start = "Grbl 1.1f ['$' for help]";
+	boolean grblStarted = false;
 	
 	boolean send = false;
 	boolean isDrawing = false;
 	boolean chalkUp = false;
+	boolean hold = false;
+	
+	GCodeStatus status = GCodeStatus.IDLE;
+	
+	EventListenerList listenerList = new EventListenerList();
 	
     //private volatile boolean exit = false;
 	
-	static ArrayList<String> gcodeCommands = new ArrayList<String>();
+	ArrayList<String> gcodeCommands = new ArrayList<String>();
 	
-	private static PApplet pApplet;
+	private PApplet pApplet;
 	
 	public enum Direction {
 	    UP, DOWN, LEFT, RIGHT 
@@ -45,6 +53,10 @@ public class GcodeSender {
 	
 	public enum Status {
 		BUSY, END, IDLE
+	}
+	
+	public enum GCodeStatus {
+		DRAWING, JOGGING, IDLE, HOLD
 	}
 
 	public static synchronized GcodeSender getInstance() {
@@ -54,8 +66,16 @@ public class GcodeSender {
 		}
 		return GcodeSender.instance;
     }
+	
+	public void addGCodeStatusListener(GCodeStatusListener l) {
+		listenerList.add(GCodeStatusListener.class, l);
+	}
 
-	public static void setupConnection(String portname, PApplet p) {
+	public void removeSensorListener(GCodeStatusListener l) {
+		listenerList.remove(GCodeStatusListener.class, l);
+	}
+
+	public void setupConnection(String portname, PApplet p) {
 		
 		pApplet = p;
 
@@ -103,7 +123,7 @@ public class GcodeSender {
 		}
 	}
 	
-	public static void requestData() {
+	public void requestData() {
 		if (port.openPort()) {
 		port.clearDTR();
 		//delay(100);
@@ -122,7 +142,7 @@ public class GcodeSender {
 		}
     }
 	
-	public static void requestData2() {
+	public void requestData2() {
 		if (portChalk.openPort()) {
 		portChalk.clearDTR();
 		//delay(100);
@@ -157,7 +177,7 @@ public class GcodeSender {
 		}
 	}
 	
-	public static void sendCommand(String str) {
+	public void sendCommand(String str) {
 		if (port.openPort()) {
 			OutputStream outputStream = port.getOutputStream();
 			try {
@@ -197,7 +217,7 @@ public class GcodeSender {
     }
 	
 	public void writeReset() {
-		/*OutputStream outputStream = port.getOutputStream();
+		OutputStream outputStream = port.getOutputStream();
 		String str = "!\n";
 		try {
 			outputStream.write(str.getBytes());
@@ -219,10 +239,10 @@ public class GcodeSender {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		setupConnection(ARDUINO);*/
+		//setupConnection(ARDUINO);
 	}
 	
-	public static void move(Direction dir, int distance) {
+	public void move(Direction dir, int distance) {
 		 switch (dir) {
 		 case UP:
 			 System.out.println("move up " + dir + distance);
@@ -250,7 +270,7 @@ public class GcodeSender {
 		 }
 	}
 	
-	public static boolean sendData(String s) {
+	public boolean sendData(String s) {
 		boolean ok = false;
 		if (port.openPort()) {
 			System.out.println(s);
@@ -263,10 +283,14 @@ public class GcodeSender {
 				Thread.sleep(1000);
 				if (scanner.hasNextLine()) {
 					String line = scanner.nextLine();
-					System.out.println(line);
-					if (line.equals("ok") || line.contains("MSG:Pgm End")) {
+					System.out.println("RESPONSE" + line);
+					if (line.equals("ok") || line.contains("MSG:Pgm End") || line.contains("Hold")) {
 						if(line.contains("MSG:Pgm End")) {
-							GcodeSender.getInstance().isDrawing = false;
+							isDrawing = false;
+							changeStatus(GCodeStatus.DRAWING);
+						}
+						if(line.contains("Hold")) {
+							hold = true;
 						}
 						ok = true;
 					} else {
@@ -286,7 +310,30 @@ public class GcodeSender {
 		return ok;
     }
 	
-	public static boolean isBusy() {
+	private void changeStatus(GCodeStatus status) {
+		Object[] listeners = listenerList.getListenerList();
+		
+		for (int i = 0; i < listeners.length; i++) {
+			if (listeners[i] == GCodeStatusListener.class) {
+				((GCodeStatusListener) listeners[i + 1])
+						.statusChanged(new GCodeStatusEvent(this, status));
+			}
+		}		
+	}
+	
+	private void changeDrawingStatus(int current, int total) {
+		Object[] listeners = listenerList.getListenerList();
+		
+		for (int i = 0; i < listeners.length; i++) {
+			if (listeners[i] == GCodeStatusListener.class) {
+				((GCodeStatusListener) listeners[i + 1])
+						.drawingStatusChanged((double)current/(double)(total - 1));
+			}
+		}		
+		
+	}
+
+	public boolean isBusy() {
 		boolean busy = false;
 		if (port.openPort()) {
 			OutputStream outputStream = port.getOutputStream();
@@ -305,8 +352,17 @@ public class GcodeSender {
 						busy = false;
 					}
 					if (line.contains("MSG:Pgm End")) {
-						GcodeSender.getInstance().isDrawing = false;
+						isDrawing = false;
 						//GcodeSender.getInstance().exit = true;
+					}
+					if (line.contains("!")) {
+						System.out.println("!!!!");
+					}
+					if (line.contains("Jog")) {
+						 changeStatus(GCodeStatus.JOGGING);
+					}
+					if (line.contains("Idle") && !isDrawing) {
+						 changeStatus(GCodeStatus.IDLE);
 					}
 				}
 			} catch (IOException e) {
@@ -326,7 +382,7 @@ public class GcodeSender {
 	
 	
 	
-	public static Status getStatus() {
+	public Status getStatus() {
 		if (port.openPort()) {
 			OutputStream outputStream = port.getOutputStream();
 	    	Scanner scanner = new Scanner(port.getInputStream());
@@ -342,6 +398,8 @@ public class GcodeSender {
 						return Status.BUSY;
 					} else if (line.contains("MSG:Pgm End")) {
 						return Status.END;
+					} else if (line.contains("!")) {
+						System.out.println("!!!!!!!!");
 					}
 				}
 			} catch (IOException e) {
@@ -360,7 +418,7 @@ public class GcodeSender {
 	
 	
 	
-	public static void readFile(String filename) {
+	public void readFile(String filename) {
 		BufferedReader br = null;
 		FileReader fr = null;
 
@@ -400,30 +458,33 @@ public class GcodeSender {
 		}
 	}
 	
-	public static void printCommands() {
+	public void printCommands() {
 		Thread thread = new Thread(){
 		   public void run(){
 			   //GcodeSender.getInstance().exit = false;
-			   GcodeSender.getInstance().isDrawing = true;
+			   isDrawing = true;
 			   //while(!GcodeSender.getInstance().exit){
 				   System.out.println("Thread Running");
 				   for (int i = 0; i < gcodeCommands.size(); i++) {
 					   System.out.println(gcodeCommands.get(i));
-					   if (gcodeCommands.get(i).contains("Z5.000000") && !GcodeSender.getInstance().chalkUp) {
+					   changeDrawingStatus(i, gcodeCommands.size());
+					   if (gcodeCommands.get(i).contains("Z5.000000") && !chalkUp) {
 						   System.out.println("TUP");
-						   GcodeSender.getInstance().send("TURBOUP\n");
+						   send("TURBOUP\n");
 						   pApplet.delay(10000);
 						   System.out.println("DELAY");
-						   GcodeSender.getInstance().chalkUp = true;
-					   } else if (gcodeCommands.get(i).contains("Z-1.000000") && GcodeSender.getInstance().chalkUp) {
+						   chalkUp = true;
+					   } else if (gcodeCommands.get(i).contains("Z-1.000000") && chalkUp) {
 						   System.out.println("TDOWN");
-						   GcodeSender.getInstance().send("TURBODOWN\n");
+						   send("TURBODOWN\n");
 						   pApplet.delay(10000);
 						   System.out.println("DELAY");
-						   GcodeSender.getInstance().chalkUp = false;
+						   chalkUp = false;
 					   }
+					   //while (GcodeSender.getInstance().hold)
 					   while (!sendData(gcodeCommands.get(i)));
 					   while (getStatus()==Status.BUSY);
+					   while (hold);
 					   //if(getStatus()==Status.END) {
 					   //   GcodeSender.getInstance().exit = true;
 					   //}
@@ -437,7 +498,7 @@ public class GcodeSender {
 		thread.start();
 	}
 	
-	public static void sendLines(String[] string) {
+	public void sendLines(String[] string) {
 		Thread thread = new Thread(){
 			public void run(){
 				System.out.println("Thread Running");
@@ -451,15 +512,38 @@ public class GcodeSender {
 		thread.start();
 	}
 	
-	public static void pause() {
+	public void pause() {
+		if (!hold) {
 		while (!sendData("!"));
+		hold = true;
+		}
 	}
 	
-	public static void resume() {
+	public void resume() {
+		if (hold) {
 		while (!sendData("~"));
+		hold = false;
+		}
 	}
 	
-	public static void draw(int number) {
+	public void stop() {
+		//while (!sendData("~"));
+		//GcodeSender.getInstance().hold = false;
+		byte[] sendData = new byte[]{(byte) 0x18};
+		port.writeBytes(sendData, sendData.length);
+		
+		String[] s1 = { "$X", "G92 X0 Y0" };
+		sendLines(s1);
+		//while (!sendData("$X"));
+		//try {
+			//wait(100);
+		//} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+		//	e.printStackTrace();
+		//}
+	}
+	
+	public void draw(int number) {
 		String file = "";
 		if (number==1) {
 			file = "/home/pi/woodie/gcode/drawing1.ngc";
@@ -469,12 +553,12 @@ public class GcodeSender {
 			file = "/home/pi/woodie/gcode/drawing3.ngc";
 		}
 		if (getStatus() != Status.BUSY) {
-			if (GcodeSender.grblStarted && !GcodeSender.getInstance().isDrawing) {
+			if (grblStarted && !isDrawing) {
     			//port.delay(100);
     			//GcodeSender.getInstance().sendData();
-    			GcodeSender.getInstance().send = true;
-    			GcodeSender.readFile(file);
-    			GcodeSender.printCommands();
+    			send = true;
+    			readFile(file);
+    			printCommands();
     		}
 		}
 	}

@@ -65,9 +65,12 @@ public class SimpleMqttCallBack implements MqttCallback {
 				System.out.println("pause");
 				GcodeSender.getInstance().pause();
 				//GcodeSender.getInstance().writeReset();
+			} else if (payload.contentEquals("resume")) {
+				System.out.println("resume");
+				GcodeSender.getInstance().resume();
 			} else if (payload.contentEquals("stop")) {
 				System.out.println("stop");
-				GcodeSender.getInstance().resume();
+				GcodeSender.getInstance().stop();
 			}
 			break;
 		case "draw":

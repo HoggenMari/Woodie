@@ -7,12 +7,14 @@ import java.util.Scanner;
 
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 
 import com.fazecast.jSerialComm.SerialPort;
 
 import processing.core.*;
 
-public class Main extends PApplet {
+public class Main extends PApplet implements GCodeStatusListener {
 	
 	boolean send = false;
 	
@@ -23,6 +25,10 @@ public class Main extends PApplet {
 	
 	PGraphics pg;
 		
+	MqttClient client;
+	
+	private int qos = 2;
+	
 	public static void main(String[] args) {
         PApplet.main("core.Main");	
         
@@ -39,7 +45,7 @@ public class Main extends PApplet {
     	
 		System.out.println("== START SUBSCRIBER ==");
 
-	    MqttClient client;
+	    
 		try {
 			client = new MqttClient("tcp://localhost:6667", Long.toString(System.currentTimeMillis()));
 			client.setCallback( new SimpleMqttCallBack() );
@@ -58,7 +64,9 @@ public class Main extends PApplet {
 		}
 		
 		GcodeSender.getInstance();
-		GcodeSender.setupConnection(portname, this);
+		GcodeSender.getInstance().setupConnection(portname, this);
+		
+		GcodeSender.getInstance().addGCodeStatusListener(this);
 		
 		LEDController.instance.setupConnection(this);
 		
@@ -83,9 +91,9 @@ public class Main extends PApplet {
     	LEDController.instance.send(pg);
 
     	
-    	/*if (this.frameCount % 100 == 0) {
+    	if (this.frameCount % 100 == 0) {
     		System.out.println(this.frameRate);
-    	}*/
+    	}
     	
     	//GcodeSender.requestData();
     	//GcodeSender.printCommands();
@@ -97,5 +105,32 @@ public class Main extends PApplet {
     		GcodeSender.printCommands();
     	}*/
     }
+
+	@Override
+	public void statusChanged(GCodeStatusEvent e) {
+		// TODO Auto-generated method stub
+		System.out.println("Received Event: " + e.status);
+		
+	}
+
+	@Override
+	public void drawingStatusChanged(double percent) {
+		// TODO Auto-generated method stub
+		System.out.println("DrawingStatusChanged: " + percent);
+		
+		String perString = Double.toString(percent);
+		MqttMessage message = new MqttMessage(perString.getBytes());
+        message.setQos(qos);
+        try {
+			client.publish("drawingstatus", message);
+		} catch (MqttPersistenceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MqttException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+				
+	}
     
 }
