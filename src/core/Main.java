@@ -46,7 +46,7 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		
     	size(100,100);
     	colorMode(RGB);
-    	frameRate(10);
+    	frameRate(30);
     	
 		System.out.println("== START SUBSCRIBER ==");
 
