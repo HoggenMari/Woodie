@@ -2,12 +2,29 @@ package core;
 
 import java.io.IOException;
 
+import javax.swing.event.EventListenerList;
+
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import core.GcodeSender.GCodeStatus;
+import core.LightEvent.LightEventObject;
+
 public class SimpleMqttCallBack implements MqttCallback {	
 
+	
+	EventListenerList listenerList = new EventListenerList();
+	
+	public void addLightEventListener(LightControlListener l) {
+		listenerList.add(LightControlListener.class, l);
+	}
+
+	public void removeLightEventListener(LightControlListener l) {
+		listenerList.remove(LightControlListener.class, l);
+	}	
+
+	
   public void connectionLost(Throwable throwable) {
     System.out.println("Connection to MQTT broker lost!");
   }
@@ -101,12 +118,35 @@ public class SimpleMqttCallBack implements MqttCallback {
 				GcodeSender.getInstance().move(GcodeSender.Direction.RIGHT, distance);
 			}
 			break;
+		case "lightcontrol":
+			System.out.println("Message received:\t" + payload);
+			if (payload.contentEquals("togglelight")) {
+				triggerLightEvent(LightEventObject.toggleLight);
+				//System.out.println("pause");
+				//GcodeSender.getInstance().pause();
+			} else if (payload.contentEquals("toggleguidance")) {
+				triggerLightEvent(LightEventObject.toggleGuidance);
+				//System.out.println("resume");
+				//GcodeSender.getInstance().resume();
+			}
+			break;
 		default:
 			System.out.println("Invalid topic");
 
 	}
   }
 
+  private void triggerLightEvent(LightEventObject event) {
+		Object[] listeners = listenerList.getListenerList();
+		
+		for (int i = 0; i < listeners.length; i++) {
+			if (listeners[i] == LightControlListener.class) {
+				((LightControlListener) listeners[i + 1])
+						.lightEvent(new LightEvent(this, event));
+			}
+		}		
+	}
+  
   public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
   }
   

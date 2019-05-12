@@ -12,9 +12,10 @@ import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 
 import com.fazecast.jSerialComm.SerialPort;
 
+import core.LightEvent.LightEventObject;
 import processing.core.*;
 
-public class Main extends PApplet implements GCodeStatusListener {
+public class Main extends PApplet implements GCodeStatusListener, LightControlListener {
 	
 	boolean send = false;
 	
@@ -29,6 +30,10 @@ public class Main extends PApplet implements GCodeStatusListener {
 	
 	private int qos = 2;
 	
+	boolean lightsOn = true;
+	boolean guidanceOn = false;
+
+	
 	public static void main(String[] args) {
         PApplet.main("core.Main");	
         
@@ -41,14 +46,16 @@ public class Main extends PApplet implements GCodeStatusListener {
 		
     	size(100,100);
     	colorMode(RGB);
-    	//frameRate(10);
+    	frameRate(10);
     	
 		System.out.println("== START SUBSCRIBER ==");
 
-	    
+		SimpleMqttCallBack mqttCallback = new SimpleMqttCallBack();
+		mqttCallback.addLightEventListener(this);
+		
 		try {
 			client = new MqttClient("tcp://localhost:6667", Long.toString(System.currentTimeMillis()));
-			client.setCallback( new SimpleMqttCallBack() );
+			client.setCallback( mqttCallback );
 		    client.connect();
 
 		    client.subscribe("rpi");
@@ -57,6 +64,7 @@ public class Main extends PApplet implements GCodeStatusListener {
 		    client.subscribe("control");
 		    client.subscribe("draw");
 		    client.subscribe("move");
+		    client.subscribe("lightcontrol");
 
 		} catch (MqttException e) {
 			// TODO Auto-generated catch block
@@ -80,12 +88,19 @@ public class Main extends PApplet implements GCodeStatusListener {
     	pg.beginDraw();
     	pg.colorMode = PConstants.RGB;
     	pg.noStroke();
-    	pg.fill(frameRate%255,255,0);
+    	pg.fill(frameCount%255,255,0);
     	//for(int i=0; i<pg.width; i++) {
         //	pg.fill(255-(frameCount%10)*10,i*10,10);
         //	pg.rect(i,0,1,pg.height);
     	//}
     	pg.rect(0,0,pg.width,pg.height);
+    	if (!lightsOn) {
+    		pg.background(0);
+    	}
+    	if (guidanceOn) {
+    		pg.fill(255,255,255,255);
+    		pg.rect(0,0,1,pg.height);
+    	}
     	pg.endDraw();
 
     	LEDController.instance.send(pg);
@@ -131,6 +146,18 @@ public class Main extends PApplet implements GCodeStatusListener {
 			e.printStackTrace();
 		}
 				
+	}
+
+	@Override
+	public void lightEvent(LightEvent e) {
+		// TODO Auto-generated method stub
+		if (e.object == LightEventObject.toggleLight) {
+			System.out.println("toogleLight");
+			lightsOn = !lightsOn;
+		} else if (e.object == LightEventObject.toggleGuidance) {
+			guidanceOn = !guidanceOn;
+			System.out.println("toogleGuidance");
+		}
 	}
     
 }
