@@ -38,7 +38,7 @@ public class GcodeSender {
 	boolean chalkUp = false;
 	boolean hold = false;
 	
-	GCodeStatus status = GCodeStatus.IDLE;
+	public GCodeStatus status = GCodeStatus.IDLE;
 	
 	EventListenerList listenerList = new EventListenerList();
 	
@@ -248,6 +248,7 @@ public class GcodeSender {
 	
 	public void move(Direction dir, int distance) {
 		changeStatus(GCodeStatus.JOGGING);
+		pApplet.delay(500);
 		 switch (dir) {
 		 case UP:
 			 System.out.println("move up " + dir + distance);
@@ -509,9 +510,10 @@ public class GcodeSender {
 			   //GcodeSender.getInstance().exit = false;
 			   isDrawing = true;
 			   changeStatus(GCodeStatus.DRAWING);
-			   //while(!GcodeSender.getInstance().exit){
+			   pApplet.delay(500);
 				   System.out.println("Thread Running");
 				   for (int i = 0; i < gcodeCommands.size(); i++) {
+					   if(isDrawing) {
 					   System.out.println(gcodeCommands.get(i));
 					   changeDrawingStatus(i, gcodeCommands.size());
 					   if (gcodeCommands.get(i).contains("Z5.000000") && !chalkUp) {
@@ -538,6 +540,7 @@ public class GcodeSender {
 					   while (!sendData(gcodeCommands.get(i)));
 					   while (getStatus()==Status.RUN);
 					   while (hold);
+					   }
 					   //if(getStatus()==Status.END) {
 					   //   GcodeSender.getInstance().exit = true;
 					   //}
@@ -545,8 +548,8 @@ public class GcodeSender {
 		    		 		GcodeSender.getInstance().isDrawing = false;
 		    	 		}*/
 				   }    
-			   //}
-		   }
+			   }
+		   
 		};
 		thread.start();
 	}
@@ -580,14 +583,15 @@ public class GcodeSender {
 	}
 	
 	public void stop() {
-		if (hold) {
+		//if (hold) {
+		isDrawing = false;
+
 		byte[] sendData = new byte[]{(byte) 0x18};
 		port.writeBytes(sendData, sendData.length);
 		
 		String[] s1 = { "$X", "G92 X0 Y0" };
 		sendLines(s1);
-		isDrawing = false;
-		}
+		//}
 	}
 	
 	public void draw(int number) {

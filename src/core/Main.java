@@ -12,6 +12,7 @@ import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 
 import com.fazecast.jSerialComm.SerialPort;
 
+import core.GcodeSender.GCodeStatus;
 import core.LightEvent.LightEventObject;
 import processing.core.*;
 
@@ -32,7 +33,10 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	
 	boolean lightsOn = true;
 	boolean guidanceOn = false;
+	
+	int counter;
 
+	float brightness = 1;
 	
 	public static void main(String[] args) {
         PApplet.main("core.Main");	
@@ -46,7 +50,7 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		
     	size(100,100);
     	colorMode(RGB);
-    	frameRate(30);
+    	//frameRate(30);
     	
 		System.out.println("== START SUBSCRIBER ==");
 
@@ -93,14 +97,33 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
         //	pg.fill(255-(frameCount%10)*10,i*10,10);
         //	pg.rect(i,0,1,pg.height);
     	//}
-    	pg.rect(0,0,pg.width,pg.height);
+    	
+    	//pg.loadPixels();
+    	if(frameCount%1==0) {
+    		counter++;
+    	}
+    	
+    	if(GcodeSender.getInstance().status == GCodeStatus.IDLE) {
+    		rainbowCycle(counter);
+    	} else if(GcodeSender.getInstance().status == GCodeStatus.DRAWING || GcodeSender.getInstance().status == GCodeStatus.JOGGING) {
+    		colorCycle(counter);
+    	}
+    	
+    	//pg.tint(255, 0, 0, 255);
+    	//pg.updatePixels();
+    	
+    	pg.fill(0,(int)(255.0-brightness*255.0));
+    	pg.rect(0, 0, pg.width, pg.height);
+    	
     	if (!lightsOn) {
     		pg.background(0);
     	}
     	if (guidanceOn) {
     		pg.fill(255,255,255,255);
-    		pg.rect(0,0,1,pg.height);
+    		pg.rect(pg.width-4,0,2,pg.height);
     	}
+    	
+    	
     	pg.endDraw();
 
     	LEDController.instance.send(pg);
@@ -122,10 +145,22 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     }
 
 	@Override
-	public void statusChanged(GCodeStatusEvent e) {
+	public void statusChanged(GCodeStatusEvent event) {
 		// TODO Auto-generated method stub
-		System.out.println("Received Event: " + e.status);
+		System.out.println("Received Event: " + event.status);
 		
+		String perString = event.status.toString();
+		MqttMessage message = new MqttMessage(perString.getBytes());
+        message.setQos(qos);
+        try {
+			client.publish("status", message);
+		} catch (MqttPersistenceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MqttException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -157,6 +192,81 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		} else if (e.object == LightEventObject.toggleGuidance) {
 			guidanceOn = !guidanceOn;
 			System.out.println("toogleGuidance");
+		} else if (e.object == LightEventObject.brightnessChanged) {
+			System.out.println("brightnessChanged: "+e.getBrightness());
+			brightness = e.getBrightness();
+		}
+	}
+	
+	private int wheel(int pos) {
+		//System.out.println(pos);
+		if (pos < 85) {
+			return this.color(pos * 3, 255 - pos * 3, 0);
+		} else if( pos < 170) {
+			pos -= 85;
+			return this.color(255 - pos * 3, 0, pos * 3);
+		} else {
+			pos -= 170;
+			return this.color(0, pos * 3, 255 - pos * 3);
+		}
+	}
+	
+	private int lerpC(int pos) {
+		int lc1 = this.color(180,0,255);//this.color(147,42,255);this.color(255,255,0);
+		int lc2 = this.color(255,0,0);//this.color(255,186,0);//this.color(255,212,12);
+		
+		/*if (pos < 32) {
+			return this.lerpColor(lc1, lc2, (float) (pos/32.0));
+		} else {
+			//pos -= 32;
+			return this.lerpColor(lc1, lc2, (float) ((64.0-pos)/32.0));
+
+		}*/
+				
+		if(pos < 16) {
+			return this.lerpColor(lc1, lc2, (float) (pos/16.0));
+		} else if(pos<32) {
+			//pos -= 16;
+			return this.lerpColor(lc2, lc1, (float) ((pos-16.0)/16.0));
+		} else if(pos<48) {
+			//pos -= 32;
+			return this.lerpColor(lc1, lc2, (float) ((pos-32.0)/16.0));
+		} else {
+			//pos -= 48;
+			return this.lerpColor(lc2, lc1, (float) ((pos-48.0)/16.0));
+		}
+		
+		
+		
+	}
+	
+	private void rainbowCycle(int j) {
+		
+		//for(int j=0; j<(256*5); j++) {
+			for(int x=0; x<pg.width; x++) {
+				for(int y=0; y<pg.height; y++) {
+					//if (pg.pixels != null) {
+						//System.out.print(pg.pixels);
+						//pg.pixels[x*pg.height+y] = this.color((x*pg.height+y)*4,0,255);//wheel(((int)(i * 256 / 64) + j) & 255);
+						int c1 = wheel(((int)((x*pg.height+y) * 256 / 64) + j) & 255);
+						//c1 = lerpC((((x*pg.height+y) * 256 / 64) + j) & 255);
+						//c1 = lerpC(((x*pg.height+y)+j)%64);
+						pg.set(x, y, c1);
+						//pg.pixels[0] = this.color(255,0,0);
+						//pg.pixels[1] = this.color(0,255,0);
+						//pg.pixels[2] = this.color(0,0,255);
+					//}	
+				}
+			}
+		//}
+    }
+	
+	private void colorCycle(int j) {
+		for(int x=0; x<pg.width; x++) {
+			for(int y=0; y<pg.height; y++) {
+				int c1 = lerpC(((x*pg.height+y)+j)%64);
+				pg.set(x, y, c1);
+			}
 		}
 	}
     

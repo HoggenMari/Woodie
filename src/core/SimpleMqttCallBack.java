@@ -16,6 +16,8 @@ public class SimpleMqttCallBack implements MqttCallback {
 	
 	EventListenerList listenerList = new EventListenerList();
 	
+	float brightness;
+	
 	public void addLightEventListener(LightControlListener l) {
 		listenerList.add(LightControlListener.class, l);
 	}
@@ -128,6 +130,11 @@ public class SimpleMqttCallBack implements MqttCallback {
 				triggerLightEvent(LightEventObject.toggleGuidance);
 				//System.out.println("resume");
 				//GcodeSender.getInstance().resume();
+			} else if (payload.contains("brightness")) {
+				//
+				String[] brightnessStrings = payload.split(" ");
+				brightness = Float.parseFloat(brightnessStrings[1]);
+				triggerLightEvent(LightEventObject.brightnessChanged);
 			}
 			break;
 		default:
@@ -142,7 +149,7 @@ public class SimpleMqttCallBack implements MqttCallback {
 		for (int i = 0; i < listeners.length; i++) {
 			if (listeners[i] == LightControlListener.class) {
 				((LightControlListener) listeners[i + 1])
-						.lightEvent(new LightEvent(this, event));
+						.lightEvent(new LightEvent(this, event, brightness));
 			}
 		}		
 	}
