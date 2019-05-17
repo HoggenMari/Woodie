@@ -9,12 +9,17 @@ import java.util.Vector;
 
 import javax.swing.event.EventListenerList;
 
+import org.eclipse.paho.client.mqttv3.MqttException;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 
 import com.fazecast.jSerialComm.SerialPort;
 
+import core.ShockEvent.ShockEventObject;
 import processing.core.PApplet;
 
 public class GcodeSender {
@@ -41,7 +46,8 @@ public class GcodeSender {
 	public GCodeStatus status = GCodeStatus.IDLE;
 	
 	EventListenerList listenerList = new EventListenerList();
-	
+	EventListenerList shockListenerList = new EventListenerList();
+
     //private volatile boolean exit = false;
 	
 	ArrayList<String> gcodeCommands = new ArrayList<String>();
@@ -51,6 +57,8 @@ public class GcodeSender {
 	double lastRunX, lastRunY;
 	double lastIdleX, lastIdleY;
 	
+	boolean detection = true;
+
 	public enum Direction {
 	    UP, DOWN, LEFT, RIGHT 
 	}
@@ -77,6 +85,14 @@ public class GcodeSender {
 
 	public void removeSensorListener(GCodeStatusListener l) {
 		listenerList.remove(GCodeStatusListener.class, l);
+	}
+	
+	public void addShockEventListener(ShockEventListener l) {
+		shockListenerList.add(ShockEventListener.class, l);
+	}
+
+	public void removeShockEventListener(ShockEventListener l) {
+		shockListenerList.remove(ShockEventListener.class, l);
 	}
 
 	public void setupConnection(String portname, PApplet p) {
@@ -125,6 +141,17 @@ public class GcodeSender {
 				e.printStackTrace();
 			}
 		}
+		
+		Thread thread = new Thread(){
+			   public void run(){
+				   while(true) {
+					   requestData2();
+					   pApplet.delay(100);
+				   }
+			   }
+		};
+		thread.start();
+		
 	}
 	
 	public void requestData() {
@@ -155,6 +182,17 @@ public class GcodeSender {
 			try {
 				String line = scanner.nextLine();
 				System.out.println(line);
+				if (line.contains("SHOCK")) {
+					System.out.println("New Shock");
+					Object[] listeners = shockListenerList.getListenerList();
+					
+					for (int i = 0; i < listeners.length; i++) {
+						if (listeners[i] == ShockEventListener.class) {
+							((ShockEventListener) listeners[i + 1])
+									.shockEvent(new ShockEvent(this, ShockEventObject.shockDetected));
+						}
+					}
+				}
 				
 			} catch(Exception e) {}
 		}
@@ -354,63 +392,6 @@ public class GcodeSender {
 		}		
 		
 	}
-
-	/*public boolean isBusy() {
-		boolean busy = false;
-		if (port.openPort()) {
-			OutputStream outputStream = port.getOutputStream();
-	    	Scanner scanner = new Scanner(port.getInputStream());
-			String str = "?\n";
-			try {
-				outputStream.write(str.getBytes());
-				outputStream.close();
-				Thread.sleep(1000);
-				if (scanner.hasNextLine()) {
-					String line = scanner.nextLine();
-					System.out.println(line);
-					if (line.contains("Run")) {
-						busy = true;
-						String[] split1 = line.split(":");
-						String[] split2 = split1[1].split(",");
-						lastRunX = Double.parseDouble(split2[0]);
-						lastRunY = Double.parseDouble(split2[1]);
-					} else {
-						busy = false;
-					}
-					if (line.contains("MSG:Pgm End")) {
-						isDrawing = false;
-						//GcodeSender.getInstance().exit = true;
-					}
-					if (line.contains("!")) {
-						System.out.println("!!!!");
-					}
-					if (line.contains("Jog")) {
-						 changeStatus(GCodeStatus.JOGGING);
-					}
-					if (line.contains("Idle") && !isDrawing) {
-						 changeStatus(GCodeStatus.IDLE);
-						 String[] split1 = line.split(":");
-						 String[] split2 = split1[1].split(",");
-						 lastIdleX = Double.parseDouble(split2[0]);
-						 lastIdleY = Double.parseDouble(split2[1]);
-					}
-				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				busy = false;
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} 
-			
-		}
-		
-		
-		return busy;
-	}*/
-	
-	
 	
 	public Status getStatus() {
 		if (port.openPort()) {
@@ -460,9 +441,6 @@ public class GcodeSender {
 		
 		return Status.IDLE;
 	}
-	
-	
-	
 	
 	public void readFile(String filename) {
 		BufferedReader br = null;
@@ -603,5 +581,9 @@ public class GcodeSender {
     			printCommands();
     		}
 		}
+	}
+	
+	public void setDetection(boolean detection) {
+		this.detection = detection;
 	}
 }

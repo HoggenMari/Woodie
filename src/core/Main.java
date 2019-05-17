@@ -3,8 +3,10 @@ package core;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Scanner;
 
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -16,7 +18,7 @@ import core.GcodeSender.GCodeStatus;
 import core.LightEvent.LightEventObject;
 import processing.core.*;
 
-public class Main extends PApplet implements GCodeStatusListener, LightControlListener {
+public class Main extends PApplet implements GCodeStatusListener, LightControlListener, ShockEventListener {
 	
 	boolean send = false;
 	
@@ -37,6 +39,8 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	int counter;
 
 	float brightness = 1;
+	
+	CircularFifoQueue<ShockEvent> shockQueue;
 	
 	public static void main(String[] args) {
         PApplet.main("core.Main");	
@@ -79,11 +83,14 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		GcodeSender.getInstance().setupConnection(portname, this);
 		
 		GcodeSender.getInstance().addGCodeStatusListener(this);
+		GcodeSender.getInstance().addShockEventListener(this);
+
 		
 		LEDController.instance.setupConnection(this);
 		
     	pg = createGraphics(16,4);
     	
+    	shockQueue = new CircularFifoQueue<>(3);
 				
     }
 
@@ -268,6 +275,52 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 				pg.set(x, y, c1);
 			}
 		}
+	}
+
+	@Override
+	public void shockEvent(ShockEvent event) {
+		// TODO Auto-generated method stub
+		System.out.println("NEW SHOICK EVENT:"+event.getTimeStamp());
+		shockQueue.add(event);
+		
+		String perString = ""+event.getTimeStamp();
+		MqttMessage message = new MqttMessage(perString.getBytes());
+        message.setQos(qos);
+        try {
+			client.publish("shock", message);
+		} catch (MqttPersistenceException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (MqttException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+        if (shockQueue.size()>=3) {
+        	long timeStamp1 = shockQueue.get(0).getTimeStamp();
+        	long timeStamp2 = shockQueue.get(2).getTimeStamp();
+        	
+        	if (timeStamp2 - timeStamp1 < 2000 && GcodeSender.getInstance().detection) {
+        		
+        		System.out.println("ALARM");
+        		GcodeSender.getInstance().pause();
+        		
+        		perString = "alarm";
+        		message = new MqttMessage(perString.getBytes());
+                message.setQos(qos);
+        		
+                try {
+        			client.publish("shock", message);
+        		} catch (MqttPersistenceException e) {
+        			// TODO Auto-generated catch block
+        			e.printStackTrace();
+        		} catch (MqttException e) {
+        			// TODO Auto-generated catch block
+        			e.printStackTrace();
+        		}
+        	}
+
+        }
 	}
     
 }

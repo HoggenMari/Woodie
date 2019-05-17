@@ -90,6 +90,15 @@ public class SimpleMqttCallBack implements MqttCallback {
 			} else if (payload.contentEquals("stop")) {
 				System.out.println("stop");
 				GcodeSender.getInstance().stop();
+			} else if (payload.contains("detection")) {
+				String[] detectionString = payload.split(" ");
+				if(detectionString[1].contains("on")) {
+					System.out.println("detection On");
+					GcodeSender.getInstance().setDetection(true);
+				} else if (detectionString[1].contains("off")) {
+					System.out.println("detection Off");
+					GcodeSender.getInstance().setDetection(false);
+				}
 			}
 			break;
 		case "draw":
