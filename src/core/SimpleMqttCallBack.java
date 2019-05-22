@@ -8,6 +8,7 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import core.ChalkEvent.ChalkEventObject;
 import core.GcodeSender.GCodeStatus;
 import core.LightEvent.LightEventObject;
 
@@ -15,6 +16,8 @@ public class SimpleMqttCallBack implements MqttCallback {
 
 	
 	EventListenerList listenerList = new EventListenerList();
+	EventListenerList chalkListenerList = new EventListenerList();
+
 	
 	float brightness;
 	
@@ -25,6 +28,14 @@ public class SimpleMqttCallBack implements MqttCallback {
 	public void removeLightEventListener(LightControlListener l) {
 		listenerList.remove(LightControlListener.class, l);
 	}	
+	
+	public void addChalkEventListener(ChalkEventListener l) {
+		chalkListenerList.add(ChalkEventListener.class, l);
+	}
+
+	public void removeChalkEventListener(ChalkEventListener l) {
+		chalkListenerList.remove(ChalkEventListener.class, l);
+	}
 
 	
   public void connectionLost(Throwable throwable) {
@@ -67,15 +78,19 @@ public class SimpleMqttCallBack implements MqttCallback {
 			if (payload.contentEquals("up")) {
 				System.out.println("up");
 				GcodeSender.getInstance().send("UP\n");
+				sendChalkEvent(true);
 			} else if (payload.contentEquals("down")) {
 				System.out.println("down");
 				GcodeSender.getInstance().send("DOWN\n");
+				sendChalkEvent(false);
 			} else if (payload.contentEquals("turboup")) {
 				System.out.println("turboup");
 				GcodeSender.getInstance().send("TURBOUP\n");
+				sendChalkEvent(true);
 			} else if (payload.contentEquals("turbodown")) {
 				System.out.println("turbodown");
 				GcodeSender.getInstance().send("TURBODOWN\n");
+				sendChalkEvent(false);
 			}
 			break;
 		case "control":
@@ -150,6 +165,27 @@ public class SimpleMqttCallBack implements MqttCallback {
 			System.out.println("Invalid topic");
 
 	}
+  }
+  
+  private void sendChalkEvent(boolean up) {
+	  
+	  System.out.println("CHALK UP");
+	  
+	  ChalkEvent event;
+	  if (up) {
+		  event = new ChalkEvent(this, ChalkEventObject.chalkUp);
+	  } else {
+		  event = new ChalkEvent(this, ChalkEventObject.chalkDown);
+	  }
+	  
+	  Object[] listeners = chalkListenerList.getListenerList();
+		
+		for (int i = 0; i < listeners.length; i++) {
+			if (listeners[i] == ChalkEventListener.class) {
+				((ChalkEventListener) listeners[i + 1])
+						.chalkEvent(event);
+			}
+		}	
   }
 
   private void triggerLightEvent(LightEventObject event) {

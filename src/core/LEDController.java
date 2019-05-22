@@ -53,4 +53,36 @@ public class LEDController {
 		
 		udp.send(message, IP_ADDRESS, PORT);
 	}
+	
+	public void send2(PGraphics pg) {
+		//write the header into the message
+		for (int i=0; i < HEADER.length; i++) {
+		  message[i] = HEADER[i];  
+		}
+		
+		// write the data (actual color information) into the message
+		int dataPointer = HEADER.length;
+		
+		for(int ix=0; ix<pg.width; ix++) {
+			if (ix%2==0) {
+				for(int iy=0; iy<pg.height; iy++) {
+					int rgb = pg.get(ix, iy);
+					message[dataPointer++] = (byte) (rgb >> 8 & 0xff); //(rgb & 0xff);
+					message[dataPointer++] = (byte) (rgb >> 16 & 0xff);
+					message[dataPointer++] = (byte) (rgb & 0xff); //(rgb >> 16 & 0xff);
+				}
+			} else {
+				for(int iy=pg.height-1; iy>=0; iy--) {
+					int rgb = pg.get(ix, iy);
+					message[dataPointer++] = (byte) (rgb >> 8 & 0xff); //(rgb & 0xff);
+					message[dataPointer++] = (byte) (rgb >> 16 & 0xff);
+					message[dataPointer++] = (byte) (rgb & 0xff); //(rgb >> 16 & 0xff);
+				}
+			}
+		}
+		
+		udp.send(message, IP_ADDRESS, PORT);
+	}
+	
+	
 }

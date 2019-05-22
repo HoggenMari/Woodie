@@ -1,5 +1,6 @@
 package core;
 
+import java.awt.Event;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -14,11 +15,12 @@ import org.eclipse.paho.client.mqttv3.MqttPersistenceException;
 
 import com.fazecast.jSerialComm.SerialPort;
 
+import core.ChalkEvent.ChalkEventObject;
 import core.GcodeSender.GCodeStatus;
 import core.LightEvent.LightEventObject;
 import processing.core.*;
 
-public class Main extends PApplet implements GCodeStatusListener, LightControlListener, ShockEventListener {
+public class Main extends PApplet implements GCodeStatusListener, LightControlListener, ShockEventListener, ChalkEventListener {
 	
 	boolean send = false;
 	
@@ -28,7 +30,8 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	static String portname = "";
 	
 	PGraphics pg;
-		
+	PGraphics pgScale;
+	
 	MqttClient client;
 	
 	private int qos = 2;
@@ -42,6 +45,16 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	
 	CircularFifoQueue<ShockEvent> shockQueue;
 	
+	ArrayList<Powerfield> fields;
+	
+	Water water = new Water();
+	
+	Firework firework;
+	
+	float chalkUpCounter;
+	
+	ChalkEventObject chalkEvent = ChalkEventObject.chalkUp;
+
 	public static void main(String[] args) {
         PApplet.main("core.Main");	
         
@@ -54,12 +67,13 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		
     	size(100,100);
     	colorMode(RGB);
-    	//frameRate(30);
+    	frameRate(30);
     	
 		System.out.println("== START SUBSCRIBER ==");
 
 		SimpleMqttCallBack mqttCallback = new SimpleMqttCallBack();
 		mqttCallback.addLightEventListener(this);
+		mqttCallback.addChalkEventListener(this);
 		
 		try {
 			client = new MqttClient("tcp://localhost:6667", Long.toString(System.currentTimeMillis()));
@@ -89,12 +103,68 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		LEDController.instance.setupConnection(this);
 		
     	pg = createGraphics(16,4);
+    	pgScale = createGraphics(160, 40);
     	
     	shockQueue = new CircularFifoQueue<>(3);
+    	
+		fields = new ArrayList<Powerfield>();
+		
+		water.setupWater(this, pgScale);
+		
+		firework = new Firework(this);
 				
     }
 
     public void draw(){
+    	
+    	//frameRate(20);
+    	
+    	pgScale.beginDraw();
+    	pgScale.noStroke();
+    	//pgScale.fill(255,0,0,255);
+    	//pgScale.rect(0, 0, pgScale.width, pgScale.height);
+    	//pgScale.fill(30, 80, 255, 255);
+    	//pgScale.rect(0, 0, pgScale.width, pgScale.height);
+    	
+    	if(GcodeSender.getInstance().status == GCodeStatus.IDLE) {
+    		
+    		if (frameCount%1000 < 500) {
+    			water.drawWater(pgScale);
+    		} else {
+    			firework.drawFirework(pgScale);	
+    			if (frameCount % 50 == 0) {
+    				firework.mousePressed();
+    			}
+    		}
+    	}
+    	
+    	//firework.drawFirework(pgScale);
+    	
+    	if (this.millis() - chalkUpCounter < 10000) {
+    		if (frameCount % 200 == 0) {
+			//fields.add(new Powerfield(this, pgScale, color(179,23,25,255)));
+    			if (chalkEvent == ChalkEventObject.chalkUp) {
+    				fields.add(new Powerfield(this, pgScale, color(0,0,0,255), true));
+    			} else {
+    				fields.add(new Powerfield(this, pgScale, color(255,255,255,255), false));
+    			}
+			
+			//firework.mousePressed();
+    		}
+    	}
+    	
+    	for (int f = 0; f < fields.size(); f++) {
+			if (fields.get(f).dead()) {
+				fields.remove(f);
+			}
+		}
+
+		for (int f = 0; f < fields.size(); f++) {
+			fields.get(f).display();
+		}
+		
+    	pgScale.endDraw();
+    	
     	
     	pg.beginDraw();
     	pg.colorMode = PConstants.RGB;
@@ -110,14 +180,21 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     		counter++;
     	}
     	
-    	if(GcodeSender.getInstance().status == GCodeStatus.IDLE) {
-    		rainbowCycle(counter);
-    	} else if(GcodeSender.getInstance().status == GCodeStatus.DRAWING || GcodeSender.getInstance().status == GCodeStatus.JOGGING) {
+    	if(GcodeSender.getInstance().status == GCodeStatus.DRAWING || GcodeSender.getInstance().status == GCodeStatus.JOGGING) {
     		colorCycle(counter);
     	}
     	
     	//pg.tint(255, 0, 0, 255);
     	//pg.updatePixels();
+    	
+    	if(GcodeSender.getInstance().status == GCodeStatus.IDLE) {
+    		PImage img = downscale(pgScale, 1);    	
+    		pg.image(img, 0, 0);
+    	}
+    	
+		//colorCycle(counter);
+		//rainbowCycle(counter);
+
     	
     	pg.fill(0,(int)(255.0-brightness*255.0));
     	pg.rect(0, 0, pg.width, pg.height);
@@ -127,13 +204,13 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	}
     	if (guidanceOn) {
     		pg.fill(255,255,255,255);
-    		pg.rect(pg.width-4,0,2,pg.height);
+    		pg.rect(0,0,2,pg.height);
     	}
     	
     	
     	pg.endDraw();
 
-    	LEDController.instance.send(pg);
+    	LEDController.instance.send2(pg);
 
     	
     	if (this.frameCount % 100 == 0) {
@@ -151,6 +228,15 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	}*/
     }
 
+    PImage downscale(PGraphics pg, int intensity) {
+		PImage in = pg.get();
+		in.filter(BLUR, intensity);
+		in.resize(16, 4);
+		//PGraphics out = createGraphics(16, 4, PConstants.P2D);
+		//out.image(in, 0, 0);
+		return in;
+	}
+    
 	@Override
 	public void statusChanged(GCodeStatusEvent event) {
 		// TODO Auto-generated method stub
@@ -219,8 +305,8 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	}
 	
 	private int lerpC(int pos) {
-		int lc1 = this.color(180,0,255);//this.color(147,42,255);this.color(255,255,0);
-		int lc2 = this.color(255,0,0);//this.color(255,186,0);//this.color(255,212,12);
+		int lc1 = this.color(147,42,255);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
+		int lc2 = this.color(255,186,0);//this.color(0,0,0);////this.color(255,212,12);
 		
 		/*if (pos < 32) {
 			return this.lerpColor(lc1, lc2, (float) (pos/32.0));
@@ -321,6 +407,18 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
         	}
 
         }
+	}
+
+	@Override
+	public void chalkEvent(ChalkEvent e) {
+		// TODO Auto-generated method stub
+		
+		System.out.println("New Chalk Event");
+		
+		chalkUpCounter = this.millis();
+		
+		chalkEvent = e.object;
+		
 	}
     
 }

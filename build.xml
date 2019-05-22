@@ -8,6 +8,8 @@
     <property name="jar.dir"     value="${build.dir}/jar"/>
     <property name="scripts.dir" value="scripts"/>
     <property name="gcode.dir" value="gcode"/>
+    <property name="images.dir" value="images"/>
+
 
     <property name="main-class"  value="core.Main"/>
 
@@ -80,6 +82,9 @@
     </scp>
     <scp todir="${username}:${password}@${raspberrypi}:${raspberryfolder}/${main.dir}/${gcode.dir}" trust="true">
            	<fileset dir="${gcode.dir}" includes="**"/>  
+    </scp>
+    <scp todir="${username}:${password}@${raspberrypi}:${raspberryfolder}/${main.dir}/${images.dir}" trust="true">
+    	    <fileset dir="${images.dir}" includes="**"/>  
     </scp>
     </target>
 	
