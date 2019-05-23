@@ -15,7 +15,7 @@
 
     <property name="lib.dir"     value="lib"/>
 
-    <property name='raspberrypi' value='192.168.0.102' />
+    <property name='raspberrypi' value='172.20.10.2' />
     <property name='raspberryfolder' value='/home/pi' />
     <property name='username' value='pi' />
     <property name='password' value='raspberry' />

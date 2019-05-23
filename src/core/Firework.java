@@ -62,9 +62,9 @@ public class Firework {
 		    
 		    int c = p.color(0,0,0);
 		    if(p.random(0, 1)<=0.5){
-		      c = p.color(p.random(0,20),p.random(90,100),p.random(100,100));
+		      c = p.color(p.random(0,0),p.random(0,0),p.random(0,0));
 		    }else{
-		      c = p.color(p.random(270,290),p.random(90,100),p.random(100,100));
+		      c = p.color(p.random(0,0),p.random(0,0),p.random(0,0));
 
 		    }
 		    for(int i=0; i<FIRE_COUNT; i++){

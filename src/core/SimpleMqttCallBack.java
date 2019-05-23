@@ -78,11 +78,11 @@ public class SimpleMqttCallBack implements MqttCallback {
 			if (payload.contentEquals("up")) {
 				System.out.println("up");
 				GcodeSender.getInstance().send("UP\n");
-				sendChalkEvent(true);
+				//sendChalkEvent(true);
 			} else if (payload.contentEquals("down")) {
 				System.out.println("down");
 				GcodeSender.getInstance().send("DOWN\n");
-				sendChalkEvent(false);
+				//sendChalkEvent(false);
 			} else if (payload.contentEquals("turboup")) {
 				System.out.println("turboup");
 				GcodeSender.getInstance().send("TURBOUP\n");

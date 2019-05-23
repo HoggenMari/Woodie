@@ -44,19 +44,19 @@ public class Powerfield {
 		canvas.noStroke();
 		canvas.fill(color);
 		//canvas.ellipse(canvas.width / 2, canvas.height / 2, rad, rad);
-		canvas.rect(0, rad, canvas.width, 15);
+		canvas.rect(0, rad, canvas.width, 12);
 		canvas.endDraw();
 	}
 
 	boolean dead() {
 		
 		if (up) {
-		if (rad > 200) {
+		if (rad > canvas.height + 12) {
 			return true;
 		} else
 			return false;
 		} else {
-			if (rad < 0) {
+			if (rad < -12) {
 				return true;
 			} else
 				return false;	

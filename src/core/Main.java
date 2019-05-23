@@ -39,7 +39,9 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	boolean lightsOn = true;
 	boolean guidanceOn = false;
 	
-	int counter;
+	double counter;
+	double counter2;
+
 
 	float brightness = 1;
 	
@@ -54,6 +56,10 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	float chalkUpCounter;
 	
 	ChalkEventObject chalkEvent = ChalkEventObject.chalkUp;
+	
+	int brightnessCounter = 0;
+	
+	boolean brCounterUp = true;
 
 	public static void main(String[] args) {
         PApplet.main("core.Main");	
@@ -121,6 +127,7 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	
     	pgScale.beginDraw();
     	pgScale.noStroke();
+    	pgScale.clear();
     	//pgScale.fill(255,0,0,255);
     	//pgScale.rect(0, 0, pgScale.width, pgScale.height);
     	//pgScale.fill(30, 80, 255, 255);
@@ -128,23 +135,23 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	
     	if(GcodeSender.getInstance().status == GCodeStatus.IDLE) {
     		
-    		if (frameCount%1000 < 500) {
-    			water.drawWater(pgScale);
-    		} else {
-    			firework.drawFirework(pgScale);	
-    			if (frameCount % 50 == 0) {
-    				firework.mousePressed();
-    			}
-    		}
+    		//if (frameCount%1000 < 500) {
+    		//	water.drawWater(pgScale);
+    		//} else {
+    			//firework.drawFirework(pgScale);	
+    			//if (frameCount % 500 == 0) {
+    			//	firework.mousePressed();
+    			//}
+    		//}
     	}
     	
     	//firework.drawFirework(pgScale);
     	
-    	if (this.millis() - chalkUpCounter < 10000) {
-    		if (frameCount % 200 == 0) {
+    	if (this.millis() - chalkUpCounter < 7000) {
+    		if (frameCount%120==0) {
 			//fields.add(new Powerfield(this, pgScale, color(179,23,25,255)));
     			if (chalkEvent == ChalkEventObject.chalkUp) {
-    				fields.add(new Powerfield(this, pgScale, color(0,0,0,255), true));
+    				fields.add(new Powerfield(this, pgScale, color(10,10,10,250), true));
     			} else {
     				fields.add(new Powerfield(this, pgScale, color(255,255,255,255), false));
     			}
@@ -177,20 +184,34 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	
     	//pg.loadPixels();
     	if(frameCount%1==0) {
-    		counter++;
+    		counter+=0.1;
+    		counter2+=1;
+    		if(brCounterUp) {
+    			brightnessCounter++;
+    			  if(brightnessCounter>=255) {
+    				  brCounterUp = false;
+    			  }
+    		  } else {
+    			  brightnessCounter--;
+    			  if(brightnessCounter<=0) {
+    				  brCounterUp = true;
+    			  }
+    		  }
     	}
     	
     	if(GcodeSender.getInstance().status == GCodeStatus.DRAWING || GcodeSender.getInstance().status == GCodeStatus.JOGGING) {
+    		colorCycle2(counter2);
+    	} else {
     		colorCycle(counter);
     	}
     	
     	//pg.tint(255, 0, 0, 255);
     	//pg.updatePixels();
     	
-    	if(GcodeSender.getInstance().status == GCodeStatus.IDLE) {
+    	//if(GcodeSender.getInstance().status == GCodeStatus.IDLE) {
     		PImage img = downscale(pgScale, 1);    	
     		pg.image(img, 0, 0);
-    	}
+    	//}
     	
 		//colorCycle(counter);
 		//rainbowCycle(counter);
@@ -304,9 +325,9 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		}
 	}
 	
-	private int lerpC(int pos) {
-		int lc1 = this.color(147,42,255);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
-		int lc2 = this.color(255,186,0);//this.color(0,0,0);////this.color(255,212,12);
+	private int lerpC(double pos) {
+		int lc1 = this.color(73,21,125);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
+		int lc2 = this.color(255,167,0);//this.color(0,0,0);////this.color(255,212,12);
 		
 		/*if (pos < 32) {
 			return this.lerpColor(lc1, lc2, (float) (pos/32.0));
@@ -315,6 +336,41 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 			return this.lerpColor(lc1, lc2, (float) ((64.0-pos)/32.0));
 
 		}*/
+				
+		if(pos < 16) {
+			return this.lerpColor(lc1, lc2, (float) (pos/16.0));
+		} else if(pos<32) {
+			//pos -= 16;
+			return this.lerpColor(lc2, lc1, (float) ((pos-16.0)/16.0));
+		} else if(pos<48) {
+			//pos -= 32;
+			return this.lerpColor(lc1, lc2, (float) ((pos-32.0)/16.0));
+		} else {
+			//pos -= 48;
+			return this.lerpColor(lc2, lc1, (float) ((pos-48.0)/16.0));
+		}
+		
+		/*if(pos < 8) {
+			return this.lerpColor(lc1, lc2, (float) (pos/8.0));
+		} else if(pos<32) {
+			//pos -= 16;
+			return this.lerpColor(lc2, lc1, (float) ((pos-8.0)/12.0));
+		} else if(pos<40) {
+			//pos -= 32;
+			return this.lerpColor(lc1, lc2, (float) ((pos-32.0)/8.0));
+		} else {
+			//pos -= 48;
+			return this.lerpColor(lc2, lc1, (float) ((pos-40.0)/12.0));
+		}*/
+		
+		
+		
+	}
+	
+	private int lerpC2(double pos) {
+		int lc1 = this.color(150,5,5);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
+		int lc2 = this.color(146,42,240);//this.color(0,0,0);////this.color(255,212,12);
+		
 				
 		if(pos < 16) {
 			return this.lerpColor(lc1, lc2, (float) (pos/16.0));
@@ -354,10 +410,19 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		//}
     }
 	
-	private void colorCycle(int j) {
+	private void colorCycle(double j) {
 		for(int x=0; x<pg.width; x++) {
 			for(int y=0; y<pg.height; y++) {
 				int c1 = lerpC(((x*pg.height+y)+j)%64);
+				pg.set(x, y, c1);
+			}
+		}
+	}
+	
+	private void colorCycle2(double j) {
+		for(int x=0; x<pg.width; x++) {
+			for(int y=0; y<pg.height; y++) {
+				int c1 = lerpC2(((x*pg.height+y)+j)%64);
 				pg.set(x, y, c1);
 			}
 		}
@@ -419,6 +484,13 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		
 		chalkEvent = e.object;
 		
+		if (chalkEvent == ChalkEventObject.chalkUp) {
+			fields.add(new Powerfield(this, pgScale, color(10,10,10,230), true));
+		} else {
+			fields.add(new Powerfield(this, pgScale, color(255,255,255,255), false));
+		}
+		
 	}
+
     
 }
