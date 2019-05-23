@@ -393,6 +393,18 @@ public class GcodeSender {
 		
 	}
 	
+	private void sendChalk(boolean up) {
+		Object[] listeners = listenerList.getListenerList();
+		
+		for (int i = 0; i < listeners.length; i++) {
+			if (listeners[i] == GCodeStatusListener.class) {
+				((GCodeStatusListener) listeners[i + 1])
+						.chalk(up);
+			}
+		}		
+		
+	}
+	
 	public Status getStatus() {
 		if (port.openPort()) {
 			OutputStream outputStream = port.getOutputStream();
@@ -498,6 +510,7 @@ public class GcodeSender {
 						   System.out.println("TUP");
 						   String command = "G00 X"+lastRunX+" Y"+lastRunY;
 						   System.out.println(command);
+						   sendChalk(true);
 						   sendData(command);
 						   pApplet.delay(500);
 						   send("TURBOUP\n");
@@ -509,6 +522,7 @@ public class GcodeSender {
 						   chalkUp = true;
 					   } else if (gcodeCommands.get(i).contains("Z-1.000000") && chalkUp) {
 						   System.out.println("TDOWN");
+						   sendChalk(false);
 						   send("TURBODOWN\n");
 						   pApplet.delay(10000);
 						   System.out.println("DELAY");

@@ -490,6 +490,23 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 			fields.add(new Powerfield(this, pgScale, color(255,255,255,255), false));
 		}
 		
+
+	}
+
+	@Override
+	public void chalk(boolean up) {
+		// TODO Auto-generated method stub
+		
+		System.out.println("New Chalk Event");
+		
+		chalkUpCounter = this.millis();
+		
+		
+		if (up) {
+			fields.add(new Powerfield(this, pgScale, color(10,10,10,230), true));
+		} else {
+			fields.add(new Powerfield(this, pgScale, color(255,255,255,255), false));
+		}
 	}
 
     

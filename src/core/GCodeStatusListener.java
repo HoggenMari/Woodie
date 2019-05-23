@@ -7,5 +7,5 @@ public interface GCodeStatusListener extends EventListener {
 	
 	public void drawingStatusChanged(double percent);
 
-
+	public void chalk(boolean up);
 }
