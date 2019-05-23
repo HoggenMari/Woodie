@@ -6,6 +6,8 @@ public interface GCodeStatusListener extends EventListener {
 	public void statusChanged(GCodeStatusEvent e);
 	
 	public void drawingStatusChanged(double percent);
+	
+	public void newAngle(float angle);
 
 
 }

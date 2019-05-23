@@ -21,6 +21,7 @@ import com.fazecast.jSerialComm.SerialPort;
 
 import core.ShockEvent.ShockEventObject;
 import processing.core.PApplet;
+import processing.core.PVector;
 
 public class GcodeSender {
 	
@@ -51,6 +52,8 @@ public class GcodeSender {
     //private volatile boolean exit = false;
 	
 	ArrayList<String> gcodeCommands = new ArrayList<String>();
+	
+	ArrayList<PVector> vectorList = new ArrayList<PVector>();
 	
 	private PApplet pApplet;
 	
@@ -393,6 +396,18 @@ public class GcodeSender {
 		
 	}
 	
+	private void sendNewAngle(float angle) {
+		Object[] listeners = listenerList.getListenerList();
+		
+		for (int i = 0; i < listeners.length; i++) {
+			if (listeners[i] == GCodeStatusListener.class) {
+				((GCodeStatusListener) listeners[i + 1])
+						.newAngle(angle);
+			}
+		}		
+		
+	}
+	
 	public Status getStatus() {
 		if (port.openPort()) {
 			OutputStream outputStream = port.getOutputStream();
@@ -454,9 +469,22 @@ public class GcodeSender {
 			String sCurrentLine;
 			
 			gcodeCommands = new ArrayList<String>();
+			
+			vectorList = new ArrayList<PVector>();
 
 			while ((sCurrentLine = br.readLine()) != null) {
 				gcodeCommands.add(sCurrentLine);
+				
+				if (sCurrentLine.contains("X") && sCurrentLine.contains("Y")) {
+					System.out.println("contains: "+sCurrentLine);
+					String[] coordinates = sCurrentLine.split(" ");
+					//float x = Float.parseFloat(coordinates[1].split("X"));
+					float x = Float.parseFloat(coordinates[1].split("X")[1]);
+					float y = Float.parseFloat(coordinates[2].split("Y")[1]);
+					vectorList.add(new PVector(y,x));
+				} else {
+					vectorList.add(null);
+				}
 			}
 
 		} catch (IOException e) {
@@ -490,6 +518,7 @@ public class GcodeSender {
 			   changeStatus(GCodeStatus.DRAWING);
 			   pApplet.delay(500);
 				   System.out.println("Thread Running");
+				   PVector pVector = new PVector(0,0);
 				   for (int i = 0; i < gcodeCommands.size(); i++) {
 					   if(isDrawing) {
 					   System.out.println(gcodeCommands.get(i));
@@ -515,6 +544,17 @@ public class GcodeSender {
 						   chalkUp = false;
 					   }
 					   //while (GcodeSender.getInstance().hold)
+					   if (vectorList.get(i) != null) {
+						   System.out.println("ALL: "+pVector+" "+vectorList.get(i));
+						   PVector axis = new PVector(0,1);
+						   PVector copy = new PVector(vectorList.get(i).x, vectorList.get(i).y);
+						   PVector diff = copy.sub(pVector);
+						   PVector norm = diff.normalize();
+						   float deg = PVector.angleBetween(axis, norm);
+						   System.out.println("VECTOR ANGLE: "+deg);
+						   sendNewAngle(deg);
+						   pVector = vectorList.get(i);
+					   }
 					   while (!sendData(gcodeCommands.get(i)));
 					   while (getStatus()==Status.RUN);
 					   while (hold);
