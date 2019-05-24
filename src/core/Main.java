@@ -100,7 +100,7 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		}
 		
 		GcodeSender.getInstance();
-		GcodeSender.getInstance().setupConnection(portname, this);
+		//GcodeSender.getInstance().setupConnection(portname, this);
 		
 		GcodeSender.getInstance().addGCodeStatusListener(this);
 		GcodeSender.getInstance().addShockEventListener(this);
@@ -115,7 +115,7 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	
 		fields = new ArrayList<Powerfield>();
 		
-		water.setupWater(this, pgScale);
+		//water.setupWater(this, pgScale);
 		
 		firework = new Firework(this);
 				
@@ -237,6 +237,8 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	if (this.frameCount % 100 == 0) {
     		System.out.println(this.frameRate);
     	}
+    	
+    	image(pg,0,0);
     	
     	//GcodeSender.requestData();
     	//GcodeSender.printCommands();
@@ -489,6 +491,12 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		} else {
 			fields.add(new Powerfield(this, pgScale, color(255,255,255,255), false));
 		}
+		
+	}
+
+	@Override
+	public void newAngle(float angle) {
+		// TODO Auto-generated method stub
 		
 	}
 
