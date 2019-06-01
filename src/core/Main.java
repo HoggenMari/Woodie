@@ -21,7 +21,7 @@ import core.GcodeSender.Status;
 import core.LightEvent.LightEventObject;
 import processing.core.*;
 
-public class Main extends PApplet implements GCodeStatusListener, LightControlListener, ShockEventListener, ChalkEventListener {
+public class Main extends PApplet implements GCodeStatusListener, LightControlListener, ShockEventListener, ChalkEventListener, UltraSonicListener {
 	
 	boolean send = false;
 	
@@ -68,6 +68,8 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	
 	Status status = GcodeSender.Status.IDLE;
 	
+	float front, back, left, right;
+	
 	public static void main(String[] args) {
         PApplet.main("core.Main");	
         
@@ -111,6 +113,7 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		
 		GcodeSender.getInstance().addGCodeStatusListener(this);
 		GcodeSender.getInstance().addShockEventListener(this);
+		GcodeSender.getInstance().addUltaSonicEventListener(this);
 
 		
 		LEDController.instance.setupConnection(this);
@@ -582,6 +585,16 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		// TODO Auto-generated method stub
 		status = e.status;
 		System.out.println("Status changed: "+status);
+	}
+
+	@Override
+	public void newMeasurement(UltraSonicEvent e) {
+		// TODO Auto-generated method stub
+		front = e.front;
+		back = e.back;
+		left = e.left;
+		right = e.right;
+		
 	}
 
 

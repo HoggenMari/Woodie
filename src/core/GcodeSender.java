@@ -35,6 +35,7 @@ public class GcodeSender {
 	
 	SerialPort portChalk = null;
 
+	SerialPort portUltrasonic = null;
 		
 	String grbl_start = "Grbl 1.1f ['$' for help]";
 	boolean grblStarted = false;
@@ -48,6 +49,7 @@ public class GcodeSender {
 	
 	EventListenerList listenerList = new EventListenerList();
 	EventListenerList shockListenerList = new EventListenerList();
+	EventListenerList ultraSonicListenerList = new EventListenerList();
 
     //private volatile boolean exit = false;
 	
@@ -97,6 +99,14 @@ public class GcodeSender {
 	public void removeShockEventListener(ShockEventListener l) {
 		shockListenerList.remove(ShockEventListener.class, l);
 	}
+	
+	public void addUltaSonicEventListener(UltraSonicListener l) {
+		shockListenerList.add(UltraSonicListener.class, l);
+	}
+
+	public void removeUltaSonicEventListener(UltraSonicListener l) {
+		shockListenerList.remove(UltraSonicListener.class, l);
+	}
 
 	public void setupConnection(String portname, PApplet p) {
 		
@@ -117,6 +127,10 @@ public class GcodeSender {
 				System.out.println(portNames[i].getSystemPortName());
 				portChalk = portNames[i];
 			}
+			if (portNames[i].getSystemPortName().contains("ttyUSB1")) {
+				System.out.println(portNames[i].getSystemPortName());
+				portUltrasonic = portNames[i];
+			}
 			
 		}
 				
@@ -131,6 +145,13 @@ public class GcodeSender {
 			portChalk.setBaudRate(BAUDRATE);
 			if (portChalk.openPort()) {
 				System.out.print("port 2 open");
+			}
+		}
+		
+		if (portUltrasonic != null) {
+			portUltrasonic.setBaudRate(BAUDRATE);
+			if (portUltrasonic.openPort()) {
+				System.out.print("port 3 open");
 			}
 		}
 		
@@ -193,6 +214,39 @@ public class GcodeSender {
 						if (listeners[i] == ShockEventListener.class) {
 							((ShockEventListener) listeners[i + 1])
 									.shockEvent(new ShockEvent(this, ShockEventObject.shockDetected));
+						}
+					}
+				}
+				
+			} catch(Exception e) {}
+		}
+		scanner.close();
+		}
+    }
+	
+	public void requestData3() {
+		if (portUltrasonic.openPort()) {
+			portUltrasonic.clearDTR();
+		//delay(100);
+    	Scanner scanner = new Scanner(portUltrasonic.getInputStream());
+		while(scanner.hasNextLine()) {
+			try {
+				String line = scanner.nextLine();
+				System.out.println(line);
+				if (line.contains("cm")) {
+					System.out.println("New Measurement");
+					Object[] listeners = ultraSonicListenerList.getListenerList();
+					
+					//line = "465.82cm 468.34cm 470.87cm 473.39cm\n";
+					
+					String[] split = line.split("cm");
+					float front = Float.parseFloat(split[0]);
+					float back = Float.parseFloat(split[1]);
+					float left = Float.parseFloat(split[2]);
+					float right = Float.parseFloat(split[3]);
+					for (int i = 0; i < listeners.length; i++) {
+						if (listeners[i] == UltraSonicListener.class) {
+							((UltraSonicListener) listeners[i + 1]).newMeasurement(new UltraSonicEvent(this, front, back, left, right));
 						}
 					}
 				}
