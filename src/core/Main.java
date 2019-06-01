@@ -17,6 +17,7 @@ import com.fazecast.jSerialComm.SerialPort;
 
 import core.ChalkEvent.ChalkEventObject;
 import core.GcodeSender.GCodeStatus;
+import core.GcodeSender.Status;
 import core.LightEvent.LightEventObject;
 import processing.core.*;
 
@@ -61,6 +62,12 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	
 	boolean brCounterUp = true;
 
+	int directionX = 0;
+	
+	boolean chalkUp = true;
+	
+	Status status = GcodeSender.Status.IDLE;
+	
 	public static void main(String[] args) {
         PApplet.main("core.Main");	
         
@@ -187,12 +194,12 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     		counter+=0.1;
     		counter2+=1;
     		if(brCounterUp) {
-    			brightnessCounter++;
+    			brightnessCounter+=10;
     			  if(brightnessCounter>=255) {
     				  brCounterUp = false;
     			  }
     		  } else {
-    			  brightnessCounter--;
+    			  brightnessCounter-=10;
     			  if(brightnessCounter<=0) {
     				  brCounterUp = true;
     			  }
@@ -223,8 +230,13 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	if (!lightsOn) {
     		pg.background(0);
     	}
+    	if (GcodeSender.getInstance().status == GCodeStatus.DRAWING) {
+    		pg.fill(255,255,255,brightnessCounter);
+    		pg.rect(directionX,0,2,pg.height);
+    	}
+    		
     	if (guidanceOn) {
-    		pg.fill(255,255,255,255);
+    		pg.fill(255,0,0,255);
     		pg.rect(0,0,2,pg.height);
     	}
     	
@@ -330,10 +342,10 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		int lc2 = this.color(255,167,0);//this.color(0,0,0);////this.color(255,212,12);
 		
 		/*if (pos < 32) {
-			return this.lerpColor(lc1, lc2, (float) (pos/32.0));
+			return this.lerpColor(lc1, lc2, (float) (pos/8.0));
 		} else {
 			//pos -= 32;
-			return this.lerpColor(lc1, lc2, (float) ((64.0-pos)/32.0));
+			return this.lerpColor(lc1, lc2, (float) ((64.0-pos)/8.0));
 
 		}*/
 				
@@ -368,9 +380,14 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	}
 	
 	private int lerpC2(double pos) {
-		int lc1 = this.color(150,5,5);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
-		int lc2 = this.color(146,42,240);//this.color(0,0,0);////this.color(255,212,12);
-		
+		int lc1, lc2;
+		if (!chalkUp) {
+		lc1 = this.color(110,3,3);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
+		lc2 = this.color(110,72,18);//this.color(0,0,0);////this.color(255,212,12);
+		} else {
+			lc1 = this.color(3,3,110);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
+			lc2 = this.color(38,92,110);//this.color(0,0,0);////this.color(255,212,12);	
+		}
 				
 		if(pos < 16) {
 			return this.lerpColor(lc1, lc2, (float) (pos/16.0));
@@ -487,7 +504,7 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		if (chalkEvent == ChalkEventObject.chalkUp) {
 			fields.add(new Powerfield(this, pgScale, color(10,10,10,230), true));
 		} else {
-			fields.add(new Powerfield(this, pgScale, color(255,255,255,255), false));
+			fields.add(new Powerfield(this, pgScale, color(10,10,10,230), false));
 		}
 		
 
@@ -498,16 +515,33 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		// TODO Auto-generated method stub
 		
 		System.out.println("New Chalk Event");
-		
+		chalkUp = up;
 		chalkUpCounter = this.millis();
 		
 		
 		if (up) {
 			fields.add(new Powerfield(this, pgScale, color(10,10,10,230), true));
 		} else {
-			fields.add(new Powerfield(this, pgScale, color(255,255,255,255), false));
+			fields.add(new Powerfield(this, pgScale, color(10,10,10,230), false));
 		}
 	}
+	
+	@Override
+	public void newAngle(float angle) {
+		// TODO Auto-generated method stub
+		System.out.println("new angle: "+angle);
+		float  x1 = map(angle, 0, 360, 0, 16);
+		directionX = (int)x1;
+	}
+
+	@Override
+	public void statusChanged(StatusEvent e) {
+		// TODO Auto-generated method stub
+		status = e.status;
+		System.out.println("Status changed: "+status);
+	}
+
+
 
     
 }
