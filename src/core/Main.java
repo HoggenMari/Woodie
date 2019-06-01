@@ -231,8 +231,51 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     		pg.background(0);
     	}
     	if (GcodeSender.getInstance().status == GCodeStatus.DRAWING) {
-    		pg.fill(255,255,255,brightnessCounter);
-    		pg.rect(directionX,0,2,pg.height);
+    		if(directionX>=1 && directionX<=14) {
+        		pg.fill(255,255,255,(float)(brightnessCounter*0.7));
+    			pg.rect(directionX-1,0,1,pg.height);
+        		pg.fill(255,255,255,255);
+    			pg.rect(directionX,0,1,pg.height);
+        		pg.fill(255,255,255,(float)(brightnessCounter*0.7));
+    			pg.rect(directionX+1,0,1,pg.height);
+    		} else if(directionX==0) {
+        		pg.fill(255,255,255,(float)(brightnessCounter*0.7));
+    			pg.rect(15,0,1,pg.height);
+        		pg.fill(255,255,255,255);
+    			pg.rect(directionX,0,1,pg.height);
+        		pg.fill(255,255,255,(float)(brightnessCounter*0.7));
+    			pg.rect(directionX+1,0,1,pg.height);
+    		} else if(directionX==15) {
+        		pg.fill(255,255,255,(float)(brightnessCounter*0.7));
+    			pg.rect(14,0,1,pg.height);
+        		pg.fill(255,255,255,255);
+    			pg.rect(directionX,0,1,pg.height);
+        		pg.fill(255,255,255,(float)(brightnessCounter*0.7));
+    			pg.rect(1,0,1,pg.height);
+    		}
+    		int directionXOpposite = (directionX+8)%16;
+    		if(directionXOpposite>=1 && directionXOpposite<=14) {
+        		pg.fill(0,0,0,(float)(brightnessCounter*0.7));
+    			pg.rect(directionXOpposite-1,0,1,pg.height);
+        		pg.fill(0,0,0,255);
+    			pg.rect(directionXOpposite,0,1,pg.height);
+        		pg.fill(0,0,0,(float)(brightnessCounter*0.7));
+    			pg.rect(directionXOpposite+1,0,1,pg.height);
+    		} else if(directionXOpposite==0) {
+        		pg.fill(0,0,0,(float)(brightnessCounter*0.7));
+    			pg.rect(15,0,1,pg.height);
+        		pg.fill(0,0,0,255);
+    			pg.rect(directionXOpposite,0,1,pg.height);
+        		pg.fill(0,0,0,(float)(brightnessCounter*0.7));
+    			pg.rect(directionXOpposite+1,0,1,pg.height);
+    		} else if(directionXOpposite==15) {
+        		pg.fill(0,0,0,(float)(brightnessCounter*0.7));
+    			pg.rect(14,0,1,pg.height);
+        		pg.fill(0,0,0,255);
+    			pg.rect(directionXOpposite,0,1,pg.height);
+        		pg.fill(0,0,0,(float)(brightnessCounter*0.7));
+    			pg.rect(1,0,1,pg.height);
+    		}
     	}
     		
     	if (guidanceOn) {
@@ -530,8 +573,8 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	public void newAngle(float angle) {
 		// TODO Auto-generated method stub
 		System.out.println("new angle: "+angle);
-		float  x1 = map(angle, 0, 360, 0, 16);
-		directionX = (int)x1;
+		float  x1 = map(angle, 0, 360, 0, 15);
+		directionX = round(x1);
 	}
 
 	@Override
