@@ -101,11 +101,11 @@ public class GcodeSender {
 	}
 	
 	public void addUltaSonicEventListener(UltraSonicListener l) {
-		shockListenerList.add(UltraSonicListener.class, l);
+		ultraSonicListenerList.add(UltraSonicListener.class, l);
 	}
 
 	public void removeUltaSonicEventListener(UltraSonicListener l) {
-		shockListenerList.remove(UltraSonicListener.class, l);
+		ultraSonicListenerList.remove(UltraSonicListener.class, l);
 	}
 
 	public void setupConnection(String portname, PApplet p) {
@@ -127,7 +127,7 @@ public class GcodeSender {
 				System.out.println(portNames[i].getSystemPortName());
 				portChalk = portNames[i];
 			}
-			if (portNames[i].getSystemPortName().contains("ttyUSB1")) {
+			if (portNames[i].getSystemPortName().contains("ttyACM0")) {
 				System.out.println(portNames[i].getSystemPortName());
 				portUltrasonic = portNames[i];
 			}
@@ -170,6 +170,7 @@ public class GcodeSender {
 			   public void run(){
 				   while(true) {
 					   requestData2();
+					   requestData3();
 					   pApplet.delay(100);
 				   }
 			   }
@@ -232,9 +233,9 @@ public class GcodeSender {
 		while(scanner.hasNextLine()) {
 			try {
 				String line = scanner.nextLine();
-				System.out.println(line);
+				//System.out.println(line);
 				if (line.contains("cm")) {
-					System.out.println("New Measurement");
+					//System.out.println("New Measurement");
 					Object[] listeners = ultraSonicListenerList.getListenerList();
 					
 					//line = "465.82cm 468.34cm 470.87cm 473.39cm\n";

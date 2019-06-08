@@ -70,6 +70,8 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	
 	float front, back, left, right;
 	
+	int sensorBlack = 0;
+	
 	public static void main(String[] args) {
         PApplet.main("core.Main");	
         
@@ -223,6 +225,18 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     		pg.image(img, 0, 0);
     	//}
     	
+    		if(front < 30 || back < 30 || left < 30 || right < 30) {
+    			if (sensorBlack < 210) {
+    			sensorBlack += 15;
+    			}
+    		} else {
+    			if (sensorBlack > 0) {
+    			sensorBlack -= 5;
+    			}
+    		}
+    		
+    	pg.fill(0, sensorBlack);
+    	pg.rect(0, 0, pg.width, pg.height);
 		//colorCycle(counter);
 		//rainbowCycle(counter);
 
@@ -590,10 +604,12 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	@Override
 	public void newMeasurement(UltraSonicEvent e) {
 		// TODO Auto-generated method stub
+		System.out.println(e.front+" "+e.back+" "+e.left+" "+e.right);
 		front = e.front;
 		back = e.back;
 		left = e.left;
 		right = e.right;
+	
 		
 	}
 
