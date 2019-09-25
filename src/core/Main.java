@@ -534,6 +534,7 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 			for(int y=0; y<pg.height; y++) {
 				int c1 = lerpC3(((x*pg.height+y)+j)%64);
 				pg.set(x, y, c1);
+				pg.background(0);
 			}
 		}
 	}
