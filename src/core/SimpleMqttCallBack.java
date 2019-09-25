@@ -159,6 +159,12 @@ public class SimpleMqttCallBack implements MqttCallback {
 				String[] brightnessStrings = payload.split(" ");
 				brightness = Float.parseFloat(brightnessStrings[1]);
 				triggerLightEvent(LightEventObject.brightnessChanged);
+			} else if (payload.contains("one")) {
+				triggerLightEvent(LightEventObject.one);
+			} else if (payload.contains("two")) {
+				triggerLightEvent(LightEventObject.two);
+			} else if (payload.contains("three")) {
+				triggerLightEvent(LightEventObject.three);
 			}
 			break;
 		default:

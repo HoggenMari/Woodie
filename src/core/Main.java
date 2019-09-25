@@ -68,6 +68,8 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	
 	Status status = GcodeSender.Status.IDLE;
 	
+	int lightPattern = 1;
+		
 	public static void main(String[] args) {
         PApplet.main("core.Main");	
         
@@ -158,9 +160,9 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     		if (frameCount%120==0) {
 			//fields.add(new Powerfield(this, pgScale, color(179,23,25,255)));
     			if (chalkEvent == ChalkEventObject.chalkUp) {
-    				fields.add(new Powerfield(this, pgScale, color(10,10,10,250), true));
+    				//fields.add(new Powerfield(this, pgScale, color(10,10,10,250), true));
     			} else {
-    				fields.add(new Powerfield(this, pgScale, color(255,255,255,255), false));
+    				//fields.add(new Powerfield(this, pgScale, color(255,255,255,255), false));
     			}
 			
 			//firework.mousePressed();
@@ -206,10 +208,13 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     		  }
     	}
     	
-    	if(GcodeSender.getInstance().status == GCodeStatus.DRAWING || GcodeSender.getInstance().status == GCodeStatus.JOGGING) {
+    	//if(GcodeSender.getInstance().status == GCodeStatus.DRAWING || GcodeSender.getInstance().status == GCodeStatus.JOGGING) {
+    	if (lightPattern == 1) {
     		colorCycle2(counter2);
-    	} else {
+    	} else if (lightPattern == 2) {
     		colorCycle(counter);
+    	} else if (lightPattern == 3) {
+    		colorCycle3(counter);
     	}
     	
     	//pg.tint(255, 0, 0, 255);
@@ -224,13 +229,13 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		//rainbowCycle(counter);
 
     	
-    	pg.fill(0,(int)(255.0-brightness*255.0));
-    	pg.rect(0, 0, pg.width, pg.height);
+    	//pg.fill(0,(int)(255.0-brightness*255.0));
+    	//pg.rect(0, 0, pg.width, pg.height);
     	
     	if (!lightsOn) {
     		pg.background(0);
     	}
-    	if (GcodeSender.getInstance().status == GCodeStatus.DRAWING) {
+    	/*if (GcodeSender.getInstance().status == GCodeStatus.DRAWING) {
     		if(directionX>=1 && directionX<=14) {
         		pg.fill(255,255,255,(float)(brightnessCounter*0.7));
     			pg.rect(directionX-1,0,1,pg.height);
@@ -276,7 +281,7 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
         		pg.fill(0,0,0,(float)(brightnessCounter*0.7));
     			pg.rect(1,0,1,pg.height);
     		}
-    	}
+    	}*/
     		
     	if (guidanceOn) {
     		pg.fill(255,0,0,255);
@@ -364,6 +369,15 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		} else if (e.object == LightEventObject.brightnessChanged) {
 			System.out.println("brightnessChanged: "+e.getBrightness());
 			brightness = e.getBrightness();
+		} else if (e.object == LightEventObject.one) {
+			System.out.println("brightnessChanged: "+e.getBrightness());
+			lightPattern = 1;
+		} else if (e.object == LightEventObject.two) {
+			System.out.println("brightnessChanged: "+e.getBrightness());
+			lightPattern = 2;
+		} else if (e.object == LightEventObject.three) {
+			System.out.println("brightnessChanged: "+e.getBrightness());
+			lightPattern = 3;
 		}
 	}
 	
@@ -383,7 +397,8 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	private int lerpC(double pos) {
 		int lc1 = this.color(73,21,125);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
 		int lc2 = this.color(255,167,0);//this.color(0,0,0);////this.color(255,212,12);
-		
+		//lc1 = this.color(245,108,52);
+				
 		/*if (pos < 32) {
 			return this.lerpColor(lc1, lc2, (float) (pos/8.0));
 		} else {
@@ -424,13 +439,39 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	
 	private int lerpC2(double pos) {
 		int lc1, lc2;
-		if (!chalkUp) {
+		//if (!chalkUp) {
 		lc1 = this.color(110,3,3);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
 		lc2 = this.color(110,72,18);//this.color(0,0,0);////this.color(255,212,12);
+		lc2 = this.color(245,108,52);
+		//} else {
+		//	lc1 = this.color(3,3,110);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
+		//	lc2 = this.color(38,92,110);//this.color(0,0,0);////this.color(255,212,12);	
+		//}
+				
+		if(pos < 16) {
+			return this.lerpColor(lc1, lc2, (float) (pos/16.0));
+		} else if(pos<32) {
+			//pos -= 16;
+			return this.lerpColor(lc2, lc1, (float) ((pos-16.0)/16.0));
+		} else if(pos<48) {
+			//pos -= 32;
+			return this.lerpColor(lc1, lc2, (float) ((pos-32.0)/16.0));
 		} else {
-			lc1 = this.color(3,3,110);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
-			lc2 = this.color(38,92,110);//this.color(0,0,0);////this.color(255,212,12);	
+			//pos -= 48;
+			return this.lerpColor(lc2, lc1, (float) ((pos-48.0)/16.0));
 		}
+	}
+	
+	private int lerpC3(double pos) {
+		int lc1, lc2;
+		//if (!chalkUp) {
+		lc1 = this.color(13,3,110);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
+		lc2 = this.color(13,200,3);//this.color(0,0,0);////this.color(255,212,12);
+		//lc2 = this.color(245,108,52);
+		//} else {
+		//	lc1 = this.color(3,3,110);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
+		//	lc2 = this.color(38,92,110);//this.color(0,0,0);////this.color(255,212,12);	
+		//}
 				
 		if(pos < 16) {
 			return this.lerpColor(lc1, lc2, (float) (pos/16.0));
@@ -483,6 +524,15 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		for(int x=0; x<pg.width; x++) {
 			for(int y=0; y<pg.height; y++) {
 				int c1 = lerpC2(((x*pg.height+y)+j)%64);
+				pg.set(x, y, c1);
+			}
+		}
+	}
+	
+	private void colorCycle3(double j) {
+		for(int x=0; x<pg.width; x++) {
+			for(int y=0; y<pg.height; y++) {
+				int c1 = lerpC3(((x*pg.height+y)+j)%64);
 				pg.set(x, y, c1);
 			}
 		}

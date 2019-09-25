@@ -11,7 +11,7 @@ public class LightEvent extends EventObject {
 	private static final long serialVersionUID = 1L;
 
 	public enum LightEventObject {
-		toggleLight, toggleGuidance, brightnessChanged
+		toggleLight, toggleGuidance, brightnessChanged, one, two, three
 	}
 	
     protected LightEventObject object;
