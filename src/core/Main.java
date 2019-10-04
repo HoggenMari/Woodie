@@ -20,7 +20,7 @@ import core.GcodeSender.GCodeStatus;
 import core.GcodeSender.Status;
 import core.LightEvent.LightEventObject;
 import processing.core.*;
-
+import java.lang.Math;
 
 public class Main extends PApplet implements GCodeStatusListener, LightControlListener, ShockEventListener, ChalkEventListener {
 	
@@ -33,6 +33,7 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	
 	PGraphics pg;
 	PGraphics pgScale;
+
 	
 	MqttClient client;
 	
@@ -70,6 +71,8 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 	Status status = GcodeSender.Status.IDLE;
 	
 	int lightPattern = 1;
+	
+	 ArrayList<Fireworks> fw = new ArrayList<Fireworks>();
 		
 	public static void main(String[] args) {
         PApplet.main("core.Main");	
@@ -120,12 +123,12 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		
     	pg = createGraphics(16,4);
     	pgScale = createGraphics(160, 40);
-    	
+ 
     	shockQueue = new CircularFifoQueue<>(3);
     	
 		fields = new ArrayList<Powerfield>();
 		
-		water.setupWater(this, pgScale);
+		//water.setupWater(this, pgScale);
 		
 		firework = new Firework(this);
 				
@@ -133,17 +136,23 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 
     public void draw(){
     	
-    	//frameRate(20);
     	
-    	pgScale.beginDraw();
+    	//frameRate(20);
+    	if(lightPattern==3) {
+        if (frameCount % 10 == 2)
+        fw.add(new Fireworks((float)(Math.random() * 160 ), (float)(Math.random() * 40), 15)); 	
+        background(255);
+        pgScale.beginDraw();
     	pgScale.noStroke();
     	pgScale.clear();
+    	pgScale.fill(0);
+    	drawFirework(pgScale);
     	//pgScale.fill(255,0,0,255);
     	//pgScale.rect(0, 0, pgScale.width, pgScale.height);
     	//pgScale.fill(30, 80, 255, 255);
     	//pgScale.rect(0, 0, pgScale.width, pgScale.height);
     	
-    	if(GcodeSender.getInstance().status == GCodeStatus.IDLE) {
+//    	if(GcodeSender.getInstance().status == GCodeStatus.IDLE) {
     		
     		//if (frameCount%1000 < 500) {
     		//	water.drawWater(pgScale);
@@ -153,36 +162,51 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     			//	firework.mousePressed();
     			//}
     		//}
-    	}
+    	
     	
     	//firework.drawFirework(pgScale);
-    	
-    	if (this.millis() - chalkUpCounter < 7000) {
-    		if (frameCount%120==0) {
-			//fields.add(new Powerfield(this, pgScale, color(179,23,25,255)));
-    			if (chalkEvent == ChalkEventObject.chalkUp) {
-    				//fields.add(new Powerfield(this, pgScale, color(10,10,10,250), true));
-    			} else {
-    				//fields.add(new Powerfield(this, pgScale, color(255,255,255,255), false));
-    			}
-			
-			//firework.mousePressed();
-    		}
-    	}
-    	
-    	for (int f = 0; f < fields.size(); f++) {
-			if (fields.get(f).dead()) {
-				fields.remove(f);
-			}
-		}
-
-		for (int f = 0; f < fields.size(); f++) {
-			fields.get(f).display();
-		}
+//    	
+//    	if (this.millis() - chalkUpCounter < 7000) {
+//    		if (frameCount%120==0) {
+//			//fields.add(new Powerfield(this, pgScale, color(179,23,25,255)));
+//    			if (chalkEvent == ChalkEventObject.chalkUp) {
+//    				//fields.add(new Powerfield(this, pgScale, color(10,10,10,250), true));
+//    			} else {
+//    				//fields.add(new Powerfield(this, pgScale, color(255,255,255,255), false));
+//    			}
+//			
+//			//firework.mousePressed();
+//    		}
+//    	}
+//    	
+//    	for (int f = 0; f < fields.size(); f++) {
+//			if (fields.get(f).dead()) {
+//				fields.remove(f);
+//			}
+//		}
+//
+//		for (int f = 0; f < fields.size(); f++) {
+//			fields.get(f).display();
+//		}
 		
     	pgScale.endDraw();
     	
+    	pg.beginDraw();
+//    	pg.colorMode = PConstants.RGB;
+//    	pg.noStroke();
+//    	pg.fill(0);
+		for(int x=0; x<pg.width; x++) {
+			for(int y=0; y<pg.height; y++) {
+				pg.set(x, y, color(0,0,0));
+			}
+		}
+		PImage img = downscale(pgScale, 1);    	
+		pg.image(img, 0, 0);
+    	pg.endDraw();
+    	LEDController.instance.send2(pg);
+    	}
     	
+    	else {
     	pg.beginDraw();
     	pg.colorMode = PConstants.RGB;
     	pg.noStroke();
@@ -214,7 +238,7 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     		colorCycle2(counter2);
     	} else if (lightPattern == 2) {
     		happy(counter2);
-    	} else if (lightPattern == 3) {
+    	} else if (lightPattern == 4) {
     		angry();
     	}
     	
@@ -222,8 +246,8 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	//pg.updatePixels();
     	
     	//if(GcodeSender.getInstance().status == GCodeStatus.IDLE) {
-    		PImage img = downscale(pgScale, 1);    	
-    		pg.image(img, 0, 0);
+//    		PImage img = downscale(pgScale, 1);    	
+//    		pg.image(img, 0, 0);
     	//}
     	
 		//colorCycle(counter);
@@ -309,6 +333,7 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     		GcodeSender.printCommands();
     	}*/
     }
+    }
 
     PImage downscale(PGraphics pg, int intensity) {
 		PImage in = pg.get();
@@ -318,6 +343,17 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		//out.image(in, 0, 0);
 		return in;
 	}
+    
+    public void drawFirework(PGraphics pgOff)
+    {
+      if (fw.size()!=0)
+      {
+        for (int i=0; i<fw.size(); i++) {
+          fw.get(i).run(pgOff);
+          if (fw.get(i).dead) fw.remove(i);
+        }
+      }
+    } 
     
 	@Override
 	public void statusChanged(GCodeStatusEvent event) {
