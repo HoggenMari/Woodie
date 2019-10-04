@@ -21,6 +21,7 @@ import core.GcodeSender.Status;
 import core.LightEvent.LightEventObject;
 import processing.core.*;
 
+
 public class Main extends PApplet implements GCodeStatusListener, LightControlListener, ShockEventListener, ChalkEventListener {
 	
 	boolean send = false;
@@ -212,9 +213,9 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	if (lightPattern == 1) {
     		colorCycle2(counter2);
     	} else if (lightPattern == 2) {
-    		colorCycle(counter);
+    		happy(counter2);
     	} else if (lightPattern == 3) {
-    		colorCycle3(counter);
+    		angry();
     	}
     	
     	//pg.tint(255, 0, 0, 255);
@@ -490,6 +491,25 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		
 	}
 	
+	  private int lerpCHappy(double pos) {
+		    int lc1 = color(246,14,0);//this.color(255,186,0);//this.color(255,212,12);//this.color(255,186,0);//this.color(180,0,255);//this.color(255,255,0);
+		    int lc2 = color(246,189,0);//this.color(0,0,0);////this.color(255,212,12);
+		    
+		        
+		    if(pos < 16) {
+		      return lerpColor(lc1, lc2, (float) (pos/16.0));
+		    } else if(pos<32) {
+		      //pos -= 16;
+		      return lerpColor(lc2, lc1, (float) ((pos-16.0)/16.0));
+		    } else if(pos<48) {
+		      //pos -= 32;
+		      return lerpColor(lc1, lc2, (float) ((pos-32.0)/16.0));
+		    } else {
+		      //pos -= 48;
+		      return lerpColor(lc2, lc1, (float) ((pos-48.0)/16.0));
+		    }
+	  }
+	
 	private void rainbowCycle(int j) {
 		
 		//for(int j=0; j<(256*5); j++) {
@@ -534,10 +554,43 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 			for(int y=0; y<pg.height; y++) {
 				int c1 = lerpC3(((x*pg.height+y)+j)%64);
 				pg.set(x, y, c1);
-				pg.background(0);
+				//pg.background(0);
 			}
 		}
 	}
+	
+	  private void happy(double j) {
+		    for(int x=0; x<pg.width; x++) {
+		      for(int y=0; y<pg.height; y++) {
+		        int c1 = lerpCHappy(((x*pg.height+y)+j)%64);
+		        pg.set(x, y, c1);
+		      }
+		    }
+		  }
+	  
+	   private void angry() {
+	     for(int x=0; x<pg.width; x++) {
+	        int time=millis()/200;
+	        int timeIndex2=millis()%200;
+	        int timeIndex = time%4;
+	        int timeIndex3=3-timeIndex;
+	        if(timeIndex==0){
+	        pg.set(x, timeIndex3, color(255,0,0));
+	         if(timeIndex2<100)
+	         pg.set(x, timeIndex, color(255,0,0));
+	         else pg.set(x, timeIndex, color(0,0,0));
+	       }
+	       else{
+	        pg.set(x, timeIndex3, color(255,0,0));
+	         if(timeIndex2<100)
+	         pg.set(x, timeIndex3+1, color(255,0,0));
+	         else pg.set(x, timeIndex3+1, color(0,0,0));
+
+	       }
+
+	    }
+	   }
+	  
 
 	@Override
 	public void shockEvent(ShockEvent event) {
