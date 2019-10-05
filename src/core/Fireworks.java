@@ -41,12 +41,13 @@ public class Fireworks{
 //	    else if(a==3){r=253;g=148;b=6;}
 //	    else if(a==4){r=255;g=97;b=201;}
 //	    else if(a==5){r=203;g=202;b=6;}
-		    if(a==0){r=255;g=0;b=0;}
-		    else if(a==1){r=0;g=255;b=0;}
-		    else if(a==2){r=0;g=0;b=255;}
-		    else if(a==3){r=255;g=255;b=0;}
-		    else if(a==4){r=0;g=255;b=255;}
-		    else if(a==5){r=255;g=0;b=255;}
+//		    if(a==0){r=255;g=0;b=0;}
+//		    else if(a==1){r=0;g=255;b=0;}
+//		    else if(a==2){r=0;g=0;b=255;}
+//		    else if(a==3){r=255;g=255;b=0;}
+//		    else if(a==4){r=0;g=255;b=255;}
+//		    else if(a==5){r=255;g=0;b=255;}
+		  r=255;g=0;b=0;
 	    particles = new ArrayList<Particle>();
 	    for (int i = 0; i < num; i++) {
 	    particles.add(new Particle(sX, sY,r,g,b));

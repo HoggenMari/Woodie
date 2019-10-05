@@ -131,6 +131,9 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		//water.setupWater(this, pgScale);
 		
 		firework = new Firework(this);
+		
+		photo = loadImage("Happy.jpg"); 
+		photo1 = loadImage("ios13.jpg"); 
 				
     }
 
@@ -146,7 +149,9 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	pgScale.noStroke();
     	pgScale.clear();
     	pgScale.fill(0);
+
     	drawFirework(pgScale);
+    	
     	//pgScale.fill(255,0,0,255);
     	//pgScale.rect(0, 0, pgScale.width, pgScale.height);
     	//pgScale.fill(30, 80, 255, 255);
@@ -191,17 +196,45 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		
     	pgScale.endDraw();
     	
+//    	pg.beginDraw();
+//    	PImage img = downscale(pgScale, 1); 
+//    	for(int x=0;x<pg.width;x++) {
+//    		for(int y=0;y<pg.height;y++) {
+//    			int loc= x+y*pg.width;
+//    			pg.pixels[loc]=img.pixels[loc];
+//    		}
+//    	}
+//    	pg.endDraw();
+//    	LEDController.instance.send2(pg);
+    	
+    	
+//    	pg.beginDraw();
+//    	for(int x=0; x<pg.width; x++) {
+//			for(int y=0; y<pg.height; y++) {
+//				pg.set(x, y, color(0,0,0));
+//			}
+//		}
+//		PImage img = downscale(pgScale, 10);    	
+//		pg.image(img, 0, 0);
+////		PImage img = downscale1(photo1, 1);    	
+////		pg.image(img, 0, 0);
+//    	pg.endDraw();
+//    	LEDController.instance.send2(pg);
+    	
     	pg.beginDraw();
-//    	pg.colorMode = PConstants.RGB;
-//    	pg.noStroke();
-//    	pg.fill(0);
-		for(int x=0; x<pg.width; x++) {
+    	for(int x=0; x<pg.width; x++) {
 			for(int y=0; y<pg.height; y++) {
 				pg.set(x, y, color(0,0,0));
 			}
 		}
 		PImage img = downscale(pgScale, 1);    	
-		pg.image(img, 0, 0);
+    	for(int x=0; x<pg.width; x++) {
+			for(int y=0; y<pg.height; y++) {
+				pg.set(x, y, img.get(x,y));
+			}
+		}
+//		PImage img = downscale1(photo1, 1);    	
+//		pg.image(img, 0, 0);
     	pg.endDraw();
     	LEDController.instance.send2(pg);
     	}
@@ -338,6 +371,14 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     PImage downscale(PGraphics pg, int intensity) {
 		PImage in = pg.get();
 		in.filter(BLUR, intensity);
+		in.resize(16, 4);
+		//PGraphics out = createGraphics(16, 4, PConstants.P2D);
+		//out.image(in, 0, 0);
+		return in;
+	}
+    
+    PImage downscale1(PImage in, int intensity) {
+//		in.filter(BLUR, intensity);
 		in.resize(16, 4);
 		//PGraphics out = createGraphics(16, 4, PConstants.P2D);
 		//out.image(in, 0, 0);
