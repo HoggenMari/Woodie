@@ -132,17 +132,16 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 		
 		firework = new Firework(this);
 		
-		photo = loadImage("Happy.jpg"); 
-		photo1 = loadImage("ios13.jpg"); 
+//		photo = loadImage("Happy.jpg"); 
+//		photo1 = loadImage("ios13.jpg"); 
 				
     }
 
     public void draw(){
     	
     	
-    	//frameRate(20);
     	if(lightPattern==3) {
-        if (frameCount % 10 == 2)
+        if (frameCount % 10 == 3) 
         fw.add(new Fireworks((float)(Math.random() * 160 ), (float)(Math.random() * 40), 15)); 	
         background(255);
         pgScale.beginDraw();
@@ -151,75 +150,10 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	pgScale.fill(0);
 
     	drawFirework(pgScale);
-    	
-    	//pgScale.fill(255,0,0,255);
-    	//pgScale.rect(0, 0, pgScale.width, pgScale.height);
-    	//pgScale.fill(30, 80, 255, 255);
-    	//pgScale.rect(0, 0, pgScale.width, pgScale.height);
-    	
-//    	if(GcodeSender.getInstance().status == GCodeStatus.IDLE) {
-    		
-    		//if (frameCount%1000 < 500) {
-    		//	water.drawWater(pgScale);
-    		//} else {
-    			//firework.drawFirework(pgScale);	
-    			//if (frameCount % 500 == 0) {
-    			//	firework.mousePressed();
-    			//}
-    		//}
-    	
-    	
-    	//firework.drawFirework(pgScale);
-//    	
-//    	if (this.millis() - chalkUpCounter < 7000) {
-//    		if (frameCount%120==0) {
-//			//fields.add(new Powerfield(this, pgScale, color(179,23,25,255)));
-//    			if (chalkEvent == ChalkEventObject.chalkUp) {
-//    				//fields.add(new Powerfield(this, pgScale, color(10,10,10,250), true));
-//    			} else {
-//    				//fields.add(new Powerfield(this, pgScale, color(255,255,255,255), false));
-//    			}
-//			
-//			//firework.mousePressed();
-//    		}
-//    	}
-//    	
-//    	for (int f = 0; f < fields.size(); f++) {
-//			if (fields.get(f).dead()) {
-//				fields.remove(f);
-//			}
-//		}
-//
-//		for (int f = 0; f < fields.size(); f++) {
-//			fields.get(f).display();
-//		}
+ 
 		
     	pgScale.endDraw();
-    	
-//    	pg.beginDraw();
-//    	PImage img = downscale(pgScale, 1); 
-//    	for(int x=0;x<pg.width;x++) {
-//    		for(int y=0;y<pg.height;y++) {
-//    			int loc= x+y*pg.width;
-//    			pg.pixels[loc]=img.pixels[loc];
-//    		}
-//    	}
-//    	pg.endDraw();
-//    	LEDController.instance.send2(pg);
-    	
-    	
-//    	pg.beginDraw();
-//    	for(int x=0; x<pg.width; x++) {
-//			for(int y=0; y<pg.height; y++) {
-//				pg.set(x, y, color(0,0,0));
-//			}
-//		}
-//		PImage img = downscale(pgScale, 10);    	
-//		pg.image(img, 0, 0);
-////		PImage img = downscale1(photo1, 1);    	
-////		pg.image(img, 0, 0);
-//    	pg.endDraw();
-//    	LEDController.instance.send2(pg);
+
     	
     	pg.beginDraw();
     	for(int x=0; x<pg.width; x++) {
@@ -233,8 +167,6 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
 				pg.set(x, y, img.get(x,y));
 			}
 		}
-//		PImage img = downscale1(photo1, 1);    	
-//		pg.image(img, 0, 0);
     	pg.endDraw();
     	LEDController.instance.send2(pg);
     	}
@@ -244,12 +176,7 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	pg.colorMode = PConstants.RGB;
     	pg.noStroke();
     	pg.fill(frameCount%255,255,0);
-    	//for(int i=0; i<pg.width; i++) {
-        //	pg.fill(255-(frameCount%10)*10,i*10,10);
-        //	pg.rect(i,0,1,pg.height);
-    	//}
-    	
-    	//pg.loadPixels();
+
     	if(frameCount%1==0) {
     		counter+=0.1;
     		counter2+=1;
@@ -266,7 +193,6 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     		  }
     	}
     	
-    	//if(GcodeSender.getInstance().status == GCodeStatus.DRAWING || GcodeSender.getInstance().status == GCodeStatus.JOGGING) {
     	if (lightPattern == 1) {
     		colorCycle2(counter2);
     	} else if (lightPattern == 2) {
@@ -274,72 +200,12 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	} else if (lightPattern == 4) {
     		angry();
     	}
-    	
-    	//pg.tint(255, 0, 0, 255);
-    	//pg.updatePixels();
-    	
-    	//if(GcodeSender.getInstance().status == GCodeStatus.IDLE) {
-//    		PImage img = downscale(pgScale, 1);    	
-//    		pg.image(img, 0, 0);
-    	//}
-    	
-		//colorCycle(counter);
-		//rainbowCycle(counter);
-
-    	
-    	//pg.fill(0,(int)(255.0-brightness*255.0));
-    	//pg.rect(0, 0, pg.width, pg.height);
+  
     	
     	if (!lightsOn) {
     		pg.background(0);
     	}
-    	/*if (GcodeSender.getInstance().status == GCodeStatus.DRAWING) {
-    		if(directionX>=1 && directionX<=14) {
-        		pg.fill(255,255,255,(float)(brightnessCounter*0.7));
-    			pg.rect(directionX-1,0,1,pg.height);
-        		pg.fill(255,255,255,255);
-    			pg.rect(directionX,0,1,pg.height);
-        		pg.fill(255,255,255,(float)(brightnessCounter*0.7));
-    			pg.rect(directionX+1,0,1,pg.height);
-    		} else if(directionX==0) {
-        		pg.fill(255,255,255,(float)(brightnessCounter*0.7));
-    			pg.rect(15,0,1,pg.height);
-        		pg.fill(255,255,255,255);
-    			pg.rect(directionX,0,1,pg.height);
-        		pg.fill(255,255,255,(float)(brightnessCounter*0.7));
-    			pg.rect(directionX+1,0,1,pg.height);
-    		} else if(directionX==15) {
-        		pg.fill(255,255,255,(float)(brightnessCounter*0.7));
-    			pg.rect(14,0,1,pg.height);
-        		pg.fill(255,255,255,255);
-    			pg.rect(directionX,0,1,pg.height);
-        		pg.fill(255,255,255,(float)(brightnessCounter*0.7));
-    			pg.rect(1,0,1,pg.height);
-    		}
-    		int directionXOpposite = (directionX+8)%16;
-    		if(directionXOpposite>=1 && directionXOpposite<=14) {
-        		pg.fill(0,0,0,(float)(brightnessCounter*0.7));
-    			pg.rect(directionXOpposite-1,0,1,pg.height);
-        		pg.fill(0,0,0,255);
-    			pg.rect(directionXOpposite,0,1,pg.height);
-        		pg.fill(0,0,0,(float)(brightnessCounter*0.7));
-    			pg.rect(directionXOpposite+1,0,1,pg.height);
-    		} else if(directionXOpposite==0) {
-        		pg.fill(0,0,0,(float)(brightnessCounter*0.7));
-    			pg.rect(15,0,1,pg.height);
-        		pg.fill(0,0,0,255);
-    			pg.rect(directionXOpposite,0,1,pg.height);
-        		pg.fill(0,0,0,(float)(brightnessCounter*0.7));
-    			pg.rect(directionXOpposite+1,0,1,pg.height);
-    		} else if(directionXOpposite==15) {
-        		pg.fill(0,0,0,(float)(brightnessCounter*0.7));
-    			pg.rect(14,0,1,pg.height);
-        		pg.fill(0,0,0,255);
-    			pg.rect(directionXOpposite,0,1,pg.height);
-        		pg.fill(0,0,0,(float)(brightnessCounter*0.7));
-    			pg.rect(1,0,1,pg.height);
-    		}
-    	}*/
+    	
     		
     	if (guidanceOn) {
     		pg.fill(255,0,0,255);
@@ -356,15 +222,6 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     		System.out.println(this.frameRate);
     	}
     	
-    	//GcodeSender.requestData();
-    	//GcodeSender.printCommands();
-    	/*if (GcodeSender.grblStarted && !GcodeSender.getInstance().send) {
-    		delay(100);
-    		//GcodeSender.getInstance().sendData();
-    		GcodeSender.getInstance().send = true;
-    		GcodeSender.readFile("/home/pi/woodie/gcode/output_0003.ngc");
-    		GcodeSender.printCommands();
-    	}*/
     }
     }
 

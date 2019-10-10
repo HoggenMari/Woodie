@@ -79,7 +79,7 @@ public class Particle{
 	  double pcolorR;
 	  float locX;
 	  float locY;
-	  double r = 10.0;
+	  double r = 30;
 	  double life = 255;
 	  
 	  Particle(float x, float y, double r, double g, double b)
