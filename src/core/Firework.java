@@ -21,15 +21,17 @@ public class Firework {
 	
 	public void drawFirework(PGraphics pgOff){
 		  
+		System.out.println("test");
+
 		  pgOff.beginDraw();
 		  pgOff.colorMode(PConstants.HSB, 360, 100, 100);
 		  pgOff.noStroke();
-		  pgOff.fill(0,0,0,30);
+		  pgOff.fill(255,0,255,30);
 		  pgOff.rect(0,0,pgOff.width,pgOff.height);
 		  
 		  pgOff.fill(200);
 		  pgOff.text("click anywhere" , 10,380); 
-		  
+		  		  
 		  for(Fire fire : hanabi){ 
 		    fire.vx += 0;
 		    fire.vy += G;
@@ -49,6 +51,7 @@ public class Firework {
 		      pgOff.ellipse(fire.x,fire.y,6,6); // draw the fire
 		      fire.lifetime -= 0.5; // decrease lifetime
 		    }else{
+		      fire.clear();
 		    }
 		  }
 		  //pgOff.fill(255,100,100);
@@ -58,7 +61,10 @@ public class Firework {
 		}
 
 	public void mousePressed(){
-		    hanabi.clear();
+		
+			System.out.println("test2");
+		
+		    //hanabi.clear();
 		    
 		    int c = p.color(0,0,0);
 		    if(p.random(0, 1)<=0.5){

@@ -149,9 +149,13 @@ public class Main extends PApplet implements GCodeStatusListener, LightControlLi
     	pgScale.clear();
     	pgScale.fill(0);
 
-    	drawFirework(pgScale);
+    	//drawFirework(pgScale);
  
-		
+		firework.drawFirework(pgScale);	
+		if (frameCount % 50 == 0) {
+			firework.mousePressed();
+		}
+
     	pgScale.endDraw();
 
     	
